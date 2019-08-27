@@ -1,10 +1,13 @@
 import random
+import datetime
 from collections import Counter
 from functools import partial, partialmethod, reduce
+from itertools import product, count
 
 import numpy as np
 import pandas as pd
 from scipy import stats
+from tqdm import tqdm
 from mesa import Agent, Model
 from mesa.time import BaseScheduler
 from mesa.datacollection import DataCollector
@@ -497,6 +500,29 @@ class ExtendedAIModel(Model):
             print("Model configuration:")
             print(self.conf)
 
+# Batch runner
+class MyBatchRunner(BatchRunner):
+    def __init__(self, model_cls, **kwargs):
+        super().__init__(model_cls, **kwargs)
+
+    def run_all(self):
+        run_count = count()
+        counter = 1
+        start = datetime.datetime.now()
+        total_iterations, all_kwargs, all_param_values = self._make_model_args()
+        print('{"chart": "Progress", "axis": "Time"}')
+
+        with tqdm(total_iterations, disable=not self.display_progress) as pbar:
+            for i, kwargs in enumerate(all_kwargs):
+                param_values = all_param_values[i]
+                for _ in range(self.iterations):
+                    self.run_iteration(kwargs, param_values, next(run_count))
+                    duration = datetime.datetime.now() - start
+                    duration = duration.seconds / 60
+                    print(f'{{"chart": "Progress", "y": {counter}, "x": {duration}}}')
+                    counter += 1
+                    pbar.update()
+
 # batch run configuration
 fixed_params = {
     "belief_dimensions": 30,
@@ -518,12 +544,13 @@ variable_params = {
     "transparency_fn": [random_transparency, low_transparency, high_transparency, full_transparency],
 }
 
-batch_run = BatchRunner(
+batch_run = MyBatchRunner(
     ExtendedAIModel,
-    variable_params,
-    fixed_params,
+    variable_parameters=variable_params,
+    fixed_parameters=fixed_params,
     iterations=1,
     max_steps=20,
+    display_progress=False,
     model_reporters={"history": track_model_steps, "ACK": calc_code_knowledge, "AHK": calc_avg_knowledge}
 )
 
