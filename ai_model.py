@@ -520,6 +520,8 @@ class MyBatchRunner(BatchRunner):
                     duration = datetime.datetime.now() - start
                     duration = duration.seconds / 60
                     print(f'{{"chart": "Progress", "y": {counter}, "x": {duration}}}')
+                    if counter % 1000 == 0:
+                        print(f'Completed {counter} of {total_iterations} total iterations')
                     counter += 1
                     pbar.update()
 
