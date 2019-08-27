@@ -510,7 +510,7 @@ class MyBatchRunner(BatchRunner):
         counter = 1
         start = datetime.datetime.now()
         total_iterations, all_kwargs, all_param_values = self._make_model_args()
-        print('{"chart": "Progress", "axis": "Time"}')
+        print('{"chart": "Progress", "axis": "Minutes"}')
 
         with tqdm(total_iterations, disable=not self.display_progress) as pbar:
             for i, kwargs in enumerate(all_kwargs):
@@ -519,9 +519,7 @@ class MyBatchRunner(BatchRunner):
                     self.run_iteration(kwargs, param_values, next(run_count))
                     duration = datetime.datetime.now() - start
                     duration = duration.seconds / 60
-                    print(f'{{"chart": "Progress", "y": {counter}, "x": {duration}}}')
-                    if counter % 1000 == 0:
-                        print(f'Completed {counter} of {total_iterations} total iterations')
+                    print(f'{{"chart": "Progress", "y": {counter / total_iterations * 100}, "x": {duration}}}')
                     counter += 1
                     pbar.update()
 
