@@ -11,7 +11,7 @@ from mesa.datacollection import DataCollector
 from mesa.batchrunner import BatchRunner
 
 # constants
-DATA_PATH="data/"
+DATA_PATH="/storage/"
 
 # helper functions
 def random_beliefs(k):
