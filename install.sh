@@ -11,6 +11,3 @@ conda config --env --set channel_priority strict
 # install packages
 pip install mesa
 conda install pandas notebook scipy numpy
-
-# save conda environment
-conda env export > /config/environment.yml

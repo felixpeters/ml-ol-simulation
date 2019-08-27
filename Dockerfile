@@ -1,5 +1,6 @@
 FROM continuumio/miniconda3
 
 # run installation
-
-# activate created environment
+COPY install.sh /install.sh
+RUN chmod +x /install.sh
+RUN /install.sh
