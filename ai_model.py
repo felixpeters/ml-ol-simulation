@@ -511,6 +511,7 @@ class MyBatchRunner(BatchRunner):
         start = datetime.datetime.now()
         total_iterations, all_kwargs, all_param_values = self._make_model_args()
         print('{"chart": "Progress", "axis": "Minutes"}')
+        print('{"chart": "Speed", "axis": "Iterations"}')
 
         with tqdm(total_iterations, disable=not self.display_progress) as pbar:
             for i, kwargs in enumerate(all_kwargs):
@@ -518,8 +519,11 @@ class MyBatchRunner(BatchRunner):
                 for _ in range(self.iterations):
                     self.run_iteration(kwargs, param_values, next(run_count))
                     duration = datetime.datetime.now() - start
-                    duration = duration.seconds / 60
-                    print(f'{{"chart": "Progress", "y": {counter / total_iterations * 100}, "x": {duration}}}')
+                    seconds = duration.seconds
+                    minutes = seconds / 60
+                    if counter % 50 == 0:
+                        print(f'{{"chart": "Progress", "y": {counter / total_iterations * 100}, "x": {minutes}}}')
+                        print(f'{{"chart": "Speed", "y": {counter / seconds}, "x": {counter}}}')
                     counter += 1
                     pbar.update()
 
@@ -527,8 +531,9 @@ class MyBatchRunner(BatchRunner):
 fixed_params = {
     "belief_dimensions": 30,
     "num_agents": 50,
-    "ai_init_mode": "significant",
     "pai": 0.05,
+    "ai_init_mode": "significant",
+    "exploration_increase": 0.2,
 }
 
 variable_params = {
@@ -536,20 +541,19 @@ variable_params = {
     "p2": [0.2, 0.5, 0.8],
     "p3": [0.0, 0.1],
     "p4": [0.0, 0.1],
-    "p_replace": [0.5, 1.0],
-    "retrain_freq": [None, 2],
+    "p_replace": [0.2, 0.8],
+    "retrain_freq": [None, 1],
     "retrain_window": [None, 5],
     "replacement_mode": ["least_knowledgeable", "increase_exploration"],
-    "exploration_increase": [0.1, 0.2],
-    "transparency_fn": [random_transparency, low_transparency, high_transparency, full_transparency],
+    "transparency_fn": [low_transparency, high_transparency],
 }
 
 batch_run = MyBatchRunner(
     ExtendedAIModel,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
-    iterations=1,
-    max_steps=20,
+    iterations=50,
+    max_steps=50,
     display_progress=False,
     model_reporters={"history": track_model_steps, "ACK": calc_code_knowledge, "AHK": calc_avg_knowledge}
 )
@@ -561,5 +565,5 @@ batch_run.run_all()
 print(f'Creating data frame from batch run data...')
 df = get_tracking_data_from_batch(batch_run)
 print(f'Saving data frame ({df.shape[0]} rows, {df.shape[1]} columns) to file...')
-df.to_csv(f"{DATA_PATH}simulation_data.csv")
+df.to_csv(f"{DATA_PATH}simulation_data_v1.csv")
 
