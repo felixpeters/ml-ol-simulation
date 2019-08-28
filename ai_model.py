@@ -535,7 +535,7 @@ fixed_params = {
     "ai_init_mode": "significant",
     "exploration_increase": 0.2,
     "p1": 0.2,
-    "p2": 0.5,
+    "p2": 0.8,
 }
 
 variable_params = {
@@ -565,4 +565,4 @@ batch_run.run_all()
 print(f'Creating data frame from batch run data...')
 df = get_tracking_data_from_batch(batch_run)
 print(f'Saving data frame ({df.shape[0]} rows, {df.shape[1]} columns) to file...')
-df.to_csv(f"{DATA_PATH}simulation_data_conf2.csv")
+df.to_csv(f"{DATA_PATH}simulation_data_conf3.csv")
