@@ -296,6 +296,7 @@ class ExtendedAIModel(Model):
                  p4=0.1,
                  pai=0.05,
                  p_replace=0.5,
+                 required_majority=0.8,
                  transparency_fn=random_transparency,
                  retrain_freq=2,
                  retrain_window=10,
@@ -312,6 +313,7 @@ class ExtendedAIModel(Model):
             "p4": p4,
             "pai": pai,
             "p_replace": p_replace,
+            "required_majority": required_majority,
             "transparency_func": transparency_fn,
             "retrain_freq": retrain_freq,
             "retrain_window": retrain_window,
@@ -351,6 +353,7 @@ class ExtendedAIModel(Model):
                 "pai": self.pai,
                 "p_replace": self.p_replace,
                 "belief_dims": self.belief_dims,
+                "required_majority": self.required_majority,
                 "human_agents": self.num_active_humans,
                 "ai_agents": self.num_ais,
                 "time": self.current_time,
@@ -415,6 +418,7 @@ class ExtendedAIModel(Model):
     p4 = partialmethod(config, "p4")
     pai = partialmethod(config, "pai")
     p_replace = partialmethod(config, "p_replace")
+    required_majority = partialmethod(config, "required_majority")
     ai_init_mode = partialmethod(config, "ai_init_mode")
     retrain_freq = partialmethod(config, "retrain_freq")
     retrain_window = partialmethod(config, "retrain_window")
@@ -439,8 +443,10 @@ class ExtendedAIModel(Model):
         for dim in self.human_dimensions:
             # determine whether significant majority belief exists
             hist = self.belief_history(dim, window=self.conf["retrain_window"])
-            rand = random_reality(len(hist))
-            if stats.ttest_ind(hist, rand).pvalue <= 0.01:
+            req_maj = self.conf["required_majority"]
+            c = Counter(hist)
+            _, num_maj = c.most_common()[0]
+            if (len(hist) > 0) and ((num_maj/len(hist)) >= req_maj):
                 self.add_ai(dim)
                 self.replace_human()
             
@@ -546,6 +552,7 @@ variable_params = {
     "retrain_window": [None, 5],
     "replacement_mode": ["least_knowledgeable", "increase_exploration"],
     "transparency_fn": [low_transparency, high_transparency],
+    "required_majority": [0.7, 0.8, 0.9],
 }
 
 batch_run = MyBatchRunner(
