@@ -543,6 +543,7 @@ fixed_params = {
     "exploration_increase": 0.2,
     "p1": 0.2,
     "p2": 0.8,
+    "required_majority": 0.7,
 }
 
 variable_params = {
@@ -553,7 +554,6 @@ variable_params = {
     "retrain_window": [None, 5],
     "replacement_mode": ["least_knowledgeable", "increase_exploration"],
     "transparency_fn": [low_transparency, high_transparency],
-    "required_majority": [0.7, 0.8, 0.9],
 }
 
 batch_run = MyBatchRunner(
