@@ -14,6 +14,7 @@ from mesa.datacollection import DataCollector
 from mesa.batchrunner import BatchRunner
 
 # constants
+#DATA_PATH = "data/"
 DATA_PATH="/storage/"
 
 # helper functions
@@ -572,4 +573,4 @@ batch_run.run_all()
 print(f'Creating data frame from batch run data...')
 df = get_tracking_data_from_batch(batch_run)
 print(f'Saving data frame ({df.shape[0]} rows, {df.shape[1]} columns) to file...')
-df.to_csv(f"{DATA_PATH}simulation_v2_conf3.csv")
+df.to_csv(f"{DATA_PATH}simulation_v3_conf1.csv")
