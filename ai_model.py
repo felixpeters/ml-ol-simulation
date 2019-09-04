@@ -509,7 +509,7 @@ class MyBatchRunner(BatchRunner):
 fixed_params = {
     "belief_dimensions": 30,
     "num_agents": 50,
-    "turbulence": "on",
+    "turbulence": "off",
 }
 
 variable_params = {
@@ -539,4 +539,4 @@ batch_run.run_all()
 print(f'Creating data frame from batch run data...')
 df = get_tracking_data_from_batch(batch_run)
 print(f'Saving data frame ({df.shape[0]} rows, {df.shape[1]} columns) to file...')
-df.to_csv(f"{DATA_PATH}simulation_v4_turbon.csv")
+df.to_csv(f"{DATA_PATH}simulation_v4_turboff.csv")
