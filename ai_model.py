@@ -58,20 +58,11 @@ def calc_ai_knowledge(model):
     else:
         return correct_ai_dims / total_ai_dims
 
-def random_transparency():
-    return np.random.random()
-
-def fixed_transparency():
-    return 0.5
-
 def high_transparency():
-    return 0.8
+    return 0.9
 
 def low_transparency():
-    return 0.2
-
-def full_transparency():
-    return 1.0
+    return 0.1
 
 def get_tracking_data_from_batch(batch_runner):
     # get number of configurations, runs and steps
@@ -291,41 +282,52 @@ class ExtendedAIModel(Model):
     def __init__(self, 
                  num_agents=50, 
                  belief_dimensions=30, 
-                 p1=0.5, 
-                 p2=0.5,
-                 p3=0.1,
-                 p4=0.1,
-                 pai=0.05,
-                 p_replace=0.5,
+                 learning_strategy="balanced",
+                 turbulence="on",
                  required_majority=0.8,
-                 transparency_fn=random_transparency,
+                 transparency_fn=high_transparency,
                  retrain_freq=2,
                  retrain_window=10,
-                 ai_init_mode="significant", 
-                 replacement_mode="least_knowledgeable", 
+                 p_replace=0.5,
                  exploration_increase=0.0):
         np.random.seed()
+        random.seed()
         self.conf = {
             "num_agents": num_agents,
             "belief_dimensions": belief_dimensions,
-            "p1": p1,
-            "p2": p2,
-            "p3": p3,
-            "p4": p4,
-            "pai": pai,
-            "p_replace": p_replace,
+            "learning_strategy": learning_strategy,
+            "turbulence": turbulence,
             "required_majority": required_majority,
             "transparency_func": transparency_fn,
             "retrain_freq": retrain_freq,
             "retrain_window": retrain_window,
-            "ai_init_mode": ai_init_mode,
-            "replacement_mode": replacement_mode,
+            "p_replace": p_replace,
             "exploration_increase": exploration_increase,
         }
+        self.init_organization_config()
         self.running = True
         self.schedule = BaseScheduler(self)
         self.init_environment()
         self.init_datacollector()
+
+    def init_organization_config(self):
+        strat = self.conf["learning_strategy"]
+        turb = self.conf["turbulence"]
+        if strat == "exploitation":
+            self.conf["p1"] = 0.9
+            self.conf["p2"] = 0.9
+        elif strat == "exploration":
+            self.conf["p1"] = 0.1
+            self.conf["p2"] = 0.1
+        else: 
+            self.conf["p1"] = 0.1
+            self.conf["p2"] = 0.9
+        if turb == "on":
+            self.conf["p3"] = 0.1
+            self.conf["p4"] = 0.02
+        else:
+            self.conf["p3"] = 0.0
+            self.conf["p4"] = 0.0
         
     def init_environment(self):
         # initialize reality
@@ -344,29 +346,23 @@ class ExtendedAIModel(Model):
     def init_datacollector(self):
         self.datacollector = DataCollector(
             model_reporters={
-                "ACK": calc_code_knowledge, 
-                "AHK": calc_avg_knowledge,
-                "AAIK": calc_ai_knowledge,
-                "p1": self.p1,
-                "p2": self.p2,
-                "p3": self.p3,
-                "p4": self.p4,
-                "pai": self.pai,
-                "p_replace": self.p_replace,
                 "belief_dims": self.belief_dims,
-                "required_majority": self.required_majority,
                 "human_agents": self.num_active_humans,
                 "ai_agents": self.num_ais,
                 "time": self.current_time,
+                "ACK": calc_code_knowledge, 
+                "AHK": calc_avg_knowledge,
+                "AAIK": calc_ai_knowledge,
+                "learning_strategy": self.learning_strategy,
+                "turbulence": self.turbulence,
+                "required_majority": self.required_majority,
                 "transparency_fn": self.transparency_fn,
                 "retrain_freq": self.retrain_freq,
                 "retrain_window": self.retrain_window,
-                "ai_init_mode": self.ai_init_mode,
-                "replacement_mode": self.replacement_mode,
+                "p_replace": self.p_replace,
                 "exploration_increase": self.exp_inc,
                 "avg_p1": self.avg_p1,
-            },
-            agent_reporters={"knowledge_level": "kl"})
+            })
         self.datacollector.collect(self)
 
     # getter functions
@@ -417,13 +413,12 @@ class ExtendedAIModel(Model):
     p2 = partialmethod(config, "p2")
     p3 = partialmethod(config, "p3")
     p4 = partialmethod(config, "p4")
-    pai = partialmethod(config, "pai")
-    p_replace = partialmethod(config, "p_replace")
+    learning_strategy = partialmethod(config, "learning_strategy")
+    turbulence = partialmethod(config, "turbulence")
     required_majority = partialmethod(config, "required_majority")
-    ai_init_mode = partialmethod(config, "ai_init_mode")
     retrain_freq = partialmethod(config, "retrain_freq")
     retrain_window = partialmethod(config, "retrain_window")
-    replacement_mode = partialmethod(config, "replacement_mode")
+    p_replace = partialmethod(config, "p_replace")
     exp_inc = partialmethod(config, "exploration_increase")
     belief_dims = partialmethod(config, "belief_dimensions")
     active_human_agents = partialmethod(human_agents, True)
@@ -434,11 +429,7 @@ class ExtendedAIModel(Model):
     def init_ais(self):
         total_dims = self.conf["belief_dimensions"]
         if len(self.ai_dimensions) < total_dims:
-            init_mode = self.conf["ai_init_mode"]
-            if init_mode == "random":
-                self.init_random_ai()
-            elif init_mode == "significant":
-                self.init_significant_ai()
+            self.init_significant_ai()
             
     def init_significant_ai(self):
         for dim in self.human_dimensions:
@@ -450,15 +441,6 @@ class ExtendedAIModel(Model):
             if (len(hist) > 0) and ((num_maj/len(hist)) >= req_maj):
                 self.add_ai(dim)
                 self.replace_human()
-            
-    def init_random_ai(self):
-        humans = self.human_agents(active_only=True)
-        for h in humans:
-            if np.random.binomial(1, self.conf["pai"]):
-                if len(self.human_dimensions) > 0:
-                    new_dim = random.choice(self.human_dimensions)
-                    self.add_ai(new_dim)
-                    h.deactivate()
     
     def add_ai(self, dim):
         ai = ArtificialIntelligence("AI{}".format(len(self.ai_dimensions)+1), 
@@ -470,25 +452,14 @@ class ExtendedAIModel(Model):
         self.human_dimensions.remove(dim)
         
     def replace_human(self):
-        replace_mode = self.conf["replacement_mode"]
-        if replace_mode == "random":
-            self.replace_random_human()
-        elif replace_mode == "least_knowledgeable":
-            self.replace_least_knowledgeable()
-        elif replace_mode == "increase_exploration":
-            self.increase_exploration()
-            
-    def replace_random_human(self):
-        if np.random.binomial(1, self.conf["p_replace"]):
-            humans = self.human_agents(active_only=True)
-            h = random.choice(humans)
-            h.deactivate()
+        self.replace_least_knowledgeable()
+        self.increase_exploration()
         
     def replace_least_knowledgeable(self):
         if np.random.binomial(1, self.conf["p_replace"]):
             humans = self.human_agents(active_only=True)
             humans.sort(key=lambda h: h.kl)
-            h = humans[0]
+            h = random.choice(humans[:(int(len(humans)/10))])
             h.deactivate()
         
     def increase_exploration(self):
@@ -538,22 +509,17 @@ class MyBatchRunner(BatchRunner):
 fixed_params = {
     "belief_dimensions": 30,
     "num_agents": 50,
-    "pai": 0.05,
-    "ai_init_mode": "significant",
-    "exploration_increase": 0.2,
-    "p1": 0.2,
-    "p2": 0.8,
-    "required_majority": 0.9,
+    "turbulence": "on",
 }
 
 variable_params = {
-    "p3": [0.0, 0.1],
-    "p4": [0.0, 0.1],
-    "p_replace": [0.2, 0.8],
-    "retrain_freq": [None, 1],
-    "retrain_window": [None, 5],
-    "replacement_mode": ["least_knowledgeable", "increase_exploration"],
+    "learning_strategy": ["exploration", "exploitation", "balanced"],
     "transparency_fn": [low_transparency, high_transparency],
+    "retrain_freq": [None, 1],
+    "retrain_window": [None, 2, 5],
+    "p_replace": [0.1, 0.9],
+    "exploration_increase": [0, 0.5],
+    "required_majority": [0.8, 0.9],
 }
 
 batch_run = MyBatchRunner(
@@ -573,4 +539,4 @@ batch_run.run_all()
 print(f'Creating data frame from batch run data...')
 df = get_tracking_data_from_batch(batch_run)
 print(f'Saving data frame ({df.shape[0]} rows, {df.shape[1]} columns) to file...')
-df.to_csv(f"{DATA_PATH}simulation_v3_conf3.csv")
+df.to_csv(f"{DATA_PATH}simulation_v4_turbon.csv")
