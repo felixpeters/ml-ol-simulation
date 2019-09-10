@@ -131,8 +131,8 @@ class Human(Agent):
         self.active = False
         
     def increase_exploration(self):
-        exp_inc = self.model.conf["exploration_increase"]
-        self.p1 = self.p1 * (1 - exp_inc)
+        num_beliefs = reduce(lambda acc, b: acc + b, [1 if b != 0 else 0 for b in self.beliefs], 0)
+        self.p1 = max(0.05, self.p1 - (1/num_beliefs))
         
     def learn_from_code(self):
         code = self.model.schedule.agents[1].code
@@ -153,6 +153,7 @@ class Human(Agent):
         p3 = self.model.conf["p3"]
         if p3 > 0.0 and np.random.binomial(1, p3):
             self.beliefs = random_beliefs(self.model.conf['belief_dimensions'])
+            self.p1 = self.model.conf["p1"]
     
     def step(self):
         if self.active:
@@ -288,8 +289,7 @@ class ExtendedAIModel(Model):
                  transparency_fn=high_transparency,
                  retrain_freq=2,
                  retrain_window=10,
-                 p_replace=0.5,
-                 exploration_increase=0.0):
+                 exploration_increase="on"):
         np.random.seed()
         random.seed()
         self.conf = {
@@ -301,7 +301,6 @@ class ExtendedAIModel(Model):
             "transparency_func": transparency_fn,
             "retrain_freq": retrain_freq,
             "retrain_window": retrain_window,
-            "p_replace": p_replace,
             "exploration_increase": exploration_increase,
         }
         self.init_organization_config()
@@ -359,7 +358,6 @@ class ExtendedAIModel(Model):
                 "transparency_fn": self.transparency_fn,
                 "retrain_freq": self.retrain_freq,
                 "retrain_window": self.retrain_window,
-                "p_replace": self.p_replace,
                 "exploration_increase": self.exp_inc,
                 "avg_p1": self.avg_p1,
             })
@@ -418,7 +416,6 @@ class ExtendedAIModel(Model):
     required_majority = partialmethod(config, "required_majority")
     retrain_freq = partialmethod(config, "retrain_freq")
     retrain_window = partialmethod(config, "retrain_window")
-    p_replace = partialmethod(config, "p_replace")
     exp_inc = partialmethod(config, "exploration_increase")
     belief_dims = partialmethod(config, "belief_dimensions")
     active_human_agents = partialmethod(human_agents, True)
@@ -437,10 +434,10 @@ class ExtendedAIModel(Model):
             hist = self.belief_history(dim, window=self.conf["retrain_window"])
             req_maj = self.conf["required_majority"]
             c = Counter(hist)
-            _, num_maj = c.most_common()[0]
+            maj_val, num_maj = c.most_common()[0]
             if (len(hist) > 0) and ((num_maj/len(hist)) >= req_maj):
                 self.add_ai(dim)
-                self.replace_human()
+                self.increase_exploration(dim, maj_val)
     
     def add_ai(self, dim):
         ai = ArtificialIntelligence("AI{}".format(len(self.ai_dimensions)+1), 
@@ -451,21 +448,12 @@ class ExtendedAIModel(Model):
         self.ai_dimensions.append(dim)
         self.human_dimensions.remove(dim)
         
-    def replace_human(self):
-        self.replace_least_knowledgeable()
-        self.increase_exploration()
-        
-    def replace_least_knowledgeable(self):
-        if np.random.binomial(1, self.conf["p_replace"]):
+    def increase_exploration(self, dim, maj_val):
+        if self.conf["exploration_increase"] == "on":
             humans = self.human_agents(active_only=True)
-            humans.sort(key=lambda h: h.kl)
-            h = random.choice(humans[:(int(len(humans)/10))])
-            h.deactivate()
-        
-    def increase_exploration(self):
-        humans = self.human_agents(active_only=True)
-        h = random.choice(humans)
-        h.increase_exploration()
+            rel_humans = list(filter(lambda h: h.beliefs[dim] == maj_val, humans))
+            for h in rel_humans:
+                h.increase_exploration()
             
     def step(self):
         try:
@@ -509,17 +497,16 @@ class MyBatchRunner(BatchRunner):
 fixed_params = {
     "belief_dimensions": 30,
     "num_agents": 50,
-    "turbulence": "off",
+    "learning_strategy": ["balanced"],
 }
 
 variable_params = {
-    "learning_strategy": ["exploration", "exploitation", "balanced"],
+    "turbulence": ["on", "off"],
     "transparency_fn": [low_transparency, high_transparency],
     "retrain_freq": [None, 1],
-    "retrain_window": [None, 2, 5],
-    "p_replace": [0.1, 0.9],
-    "exploration_increase": [0, 0.5],
-    "required_majority": [0.8, 0.9],
+    "retrain_window": [None, 5, 2],
+    "exploration_increase": ["on", "off"],
+    "required_majority": [0.7, 0.8, 0.9],
 }
 
 batch_run = MyBatchRunner(
@@ -539,4 +526,4 @@ batch_run.run_all()
 print(f'Creating data frame from batch run data...')
 df = get_tracking_data_from_batch(batch_run)
 print(f'Saving data frame ({df.shape[0]} rows, {df.shape[1]} columns) to file...')
-df.to_csv(f"{DATA_PATH}simulation_v4_turboff.csv")
+df.to_csv(f"{DATA_PATH}simulation_v5_balanced.csv")
