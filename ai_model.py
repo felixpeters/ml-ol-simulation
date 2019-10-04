@@ -373,7 +373,7 @@ class ExtendedAIModel(Model):
                 "retrain_freq": self.retrain_freq,
                 "retrain_window": self.retrain_window,
                 "exploration_increase": self.exp_inc,
-                "ai_updates": self.ai_updates,
+                "ai_updates": self.num_ai_updates,
                 "avg_p1": self.avg_p1,
             })
         self.datacollector.collect(self)
@@ -382,7 +382,7 @@ class ExtendedAIModel(Model):
     def config(self, param, *args):
         return self.conf[param]
 
-    def ai_updates(self, *args):
+    def num_ai_updates(self, *args):
         return self.ai_updates
     
     def transparency_fn(self, *args):
