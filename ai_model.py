@@ -260,6 +260,17 @@ class ArtificialIntelligence(Agent):
         # update belief dimension with majority value
         self.beliefs[self.belief_dimension] = maj
         
+    def retrain(self):
+        window = self.model.conf["retrain_window"]
+        belief_history = self.model.belief_history(self.belief_dimension, window=window)
+        # determine majority value
+        c = Counter(belief_history)
+        maj, _ = c.most_common()[0]
+        if maj != self.beliefs[self.belief_dimension]:
+            # update belief dimension with majority value
+            self.beliefs[self.belief_dimension] = maj
+            self.model.ai_updates += 1
+        
     def __repr__(self):
         return "AI(id={}, belief_dim={}, beliefs={}, transparency={:.2f})".format(
             self.unique_id, 
@@ -272,7 +283,7 @@ class ArtificialIntelligence(Agent):
         freq = self.model.conf["retrain_freq"]
         window = self.model.conf["retrain_window"]
         if (freq != None) and (self.lifetime % freq == 0):
-            self.learn_from_humans()
+            self.retrain()
 
 
 class ExtendedAIModel(Model):
@@ -304,6 +315,7 @@ class ExtendedAIModel(Model):
         }
         self.init_organization_config()
         self.running = True
+        self.ai_updates = 0
         self.schedule = BaseScheduler(self)
         self.init_environment()
         self.init_datacollector()
@@ -317,6 +329,9 @@ class ExtendedAIModel(Model):
         elif strat == "exploration":
             self.conf["p1"] = 0.1
             self.conf["p2"] = 0.1
+        elif strat == "restricted_exploitation":
+            self.conf["p1"] = 0.5
+            self.conf["p2"] = 0.9
         else: 
             self.conf["p1"] = 0.1
             self.conf["p2"] = 0.9
@@ -358,6 +373,7 @@ class ExtendedAIModel(Model):
                 "retrain_freq": self.retrain_freq,
                 "retrain_window": self.retrain_window,
                 "exploration_increase": self.exp_inc,
+                "ai_updates": self.ai_updates,
                 "avg_p1": self.avg_p1,
             })
         self.datacollector.collect(self)
@@ -365,6 +381,9 @@ class ExtendedAIModel(Model):
     # getter functions
     def config(self, param, *args):
         return self.conf[param]
+
+    def ai_updates(self, *args):
+        return self.ai_updates
     
     def transparency_fn(self, *args):
         return self.conf["transparency_func"].__name__    
@@ -496,24 +515,24 @@ class MyBatchRunner(BatchRunner):
 fixed_params = {
     "belief_dimensions": 30,
     "num_agents": 50,
-    "learning_strategy": "exploitation",
+    "retrain_freq": 1,
+    "retrain_window": None,
 }
 
 variable_params = {
+    "learning_strategy": ["balanced", "exploration", "exploitation", "restricted_exploitation"],
     "turbulence": ["on", "off"],
     "transparency_fn": [low_transparency, high_transparency],
-    "retrain_freq": [None, 1],
-    "retrain_window": [None, 5, 2],
     "exploration_increase": ["on", "off"],
-    "required_majority": [0.7, 0.8, 0.9],
+    "required_majority": [0.7, 0.9],
 }
 
 batch_run = MyBatchRunner(
     ExtendedAIModel,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
-    iterations=50,
-    max_steps=50,
+    iterations=30,
+    max_steps=80,
     display_progress=False,
     model_reporters={"history": track_model_steps, "ACK": calc_code_knowledge, "AHK": calc_avg_knowledge}
 )
@@ -525,4 +544,4 @@ batch_run.run_all()
 print(f'Creating data frame from batch run data...')
 df = get_tracking_data_from_batch(batch_run)
 print(f'Saving data frame ({df.shape[0]} rows, {df.shape[1]} columns) to file...')
-df.to_csv(f"{DATA_PATH}simulation_v7_exploitation.csv")
+df.to_csv(f"{DATA_PATH}simulation_v8_raw.csv")
