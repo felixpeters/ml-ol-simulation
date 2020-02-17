@@ -1,6 +1,7 @@
 import datetime
 from collections import Counter
 from itertools import product, count
+from functools import reduce
 
 from tqdm import tqdm
 import pandas as pd
@@ -43,19 +44,11 @@ class MyBatchRunner(BatchRunner):
         counter = 1
         start = datetime.datetime.now()
         total_iterations, all_kwargs, all_param_values = self._make_model_args()
-        print('{"chart": "Progress", "axis": "Minutes"}')
-        print('{"chart": "Speed", "axis": "Iterations"}')
 
         with tqdm(total_iterations, disable=not self.display_progress) as pbar:
             for i, kwargs in enumerate(all_kwargs):
                 param_values = all_param_values[i]
                 for _ in range(self.iterations):
                     self.run_iteration(kwargs, param_values, next(run_count))
-                    duration = datetime.datetime.now() - start
-                    seconds = duration.seconds
-                    minutes = seconds / 60
-                    if counter % 50 == 0:
-                        print(f'{{"chart": "Progress", "y": {counter / total_iterations * 100}, "x": {minutes}}}')
-                        print(f'{{"chart": "Speed", "y": {counter / seconds}, "x": {counter}}}')
                     counter += 1
                     pbar.update()

@@ -12,7 +12,7 @@ from mesa import Agent, Model
 from mesa.time import BaseScheduler
 from mesa.datacollection import DataCollector
 
-from utils.metrics import calc_knowledge_level
+from utils.metrics import *
 
 # helper functions
 def random_beliefs(k):
@@ -23,12 +23,6 @@ def random_reality(k):
     a = np.random.randint(0, 2, k)
     a[a == 0] = -1
     return a
-
-def high_transparency():
-    return 0.9
-
-def low_transparency():
-    return 0.1
 
 # model classes
 class Human(Agent):
@@ -178,11 +172,11 @@ class Reality(Agent):
 class ArtificialIntelligence(Agent):
     """ An artificial agent specialized on one belief dimension."""
     
-    def __init__(self, unique_id, model, belief_dimension, transparencyFn):
+    def __init__(self, unique_id, model, belief_dimension, transparency):
         super().__init__(unique_id, model)
         self.beliefs = np.zeros(model.conf['belief_dimensions'], dtype=np.int64)
         self.belief_dimension = belief_dimension
-        self.transparency = transparencyFn()
+        self.transparency = transparency
         self.lifetime = 0
         self.learn_from_humans()
         self.update_kl()
@@ -234,7 +228,7 @@ class InitialModel(Model):
                  learning_strategy="balanced",
                  turbulence="on",
                  required_majority=0.8,
-                 transparency_fn=high_transparency,
+                 transparency=0.9,
                  retrain_freq=2,
                  retrain_window=10,
                  exploration_increase="on"):
@@ -246,7 +240,7 @@ class InitialModel(Model):
             "learning_strategy": learning_strategy,
             "turbulence": turbulence,
             "required_majority": required_majority,
-            "transparency_func": transparency_fn,
+            "transparency": transparency,
             "retrain_freq": retrain_freq,
             "retrain_window": retrain_window,
             "exploration_increase": exploration_increase,
@@ -302,12 +296,12 @@ class InitialModel(Model):
                 "ai_agents": self.num_ais,
                 "time": self.current_time,
                 "ACK": calc_code_knowledge, 
-                "AHK": calc_avg_knowledge,
+                "AHK": calc_human_knowledge,
                 "AAIK": calc_ai_knowledge,
                 "learning_strategy": self.learning_strategy,
                 "turbulence": self.turbulence,
                 "required_majority": self.required_majority,
-                "transparency_fn": self.transparency_fn,
+                "transparency": self.transparency,
                 "retrain_freq": self.retrain_freq,
                 "retrain_window": self.retrain_window,
                 "exploration_increase": self.exp_inc,
@@ -322,9 +316,6 @@ class InitialModel(Model):
 
     def num_ai_updates(self, *args):
         return self.ai_updates
-    
-    def transparency_fn(self, *args):
-        return self.conf["transparency_func"].__name__    
     
     def current_time(self, *args):
         return int(self.schedule.time)
@@ -369,6 +360,7 @@ class InitialModel(Model):
     p4 = partialmethod(config, "p4")
     learning_strategy = partialmethod(config, "learning_strategy")
     turbulence = partialmethod(config, "turbulence")
+    transparency = partialmethod(config, "transparency")
     required_majority = partialmethod(config, "required_majority")
     retrain_freq = partialmethod(config, "retrain_freq")
     retrain_window = partialmethod(config, "retrain_window")
@@ -399,7 +391,7 @@ class InitialModel(Model):
         ai = ArtificialIntelligence("AI{}".format(len(self.ai_dimensions)+1), 
                                     self, 
                                     dim, 
-                                    self.conf["transparency_func"])
+                                    self.conf["transparency"])
         self.schedule.add(ai)
         self.ai_dimensions.append(dim)
         self.human_dimensions.remove(dim)

@@ -1,3 +1,5 @@
+import numpy as np
+
 def calc_knowledge_level(reality, beliefs):
     equals = 0
     for i in range(len(reality)):

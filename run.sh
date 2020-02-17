@@ -1,4 +1,4 @@
 #!/bin/bash
-cd $1
+source /etc/profile.d/conda.sh
 conda activate misq_sim
-#python -u ai_model.py
+python -u run_initial.py

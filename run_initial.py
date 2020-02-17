@@ -1,11 +1,10 @@
 from utils.runners import MyBatchRunner
-from utils.metrics import track_model_steps, calc_code_knowledge,
-calc_human_knowledge
+from utils.metrics import track_model_steps, calc_code_knowledge, calc_human_knowledge
 from models.initial import InitialModel
 
 # constants
-#DATA_PATH = "data/"
-DATA_PATH="/storage/"
+DATA_PATH = "data/"
+#DATA_PATH="/storage/"
 
 # batch run configuration
 fixed_params = {
@@ -13,13 +12,13 @@ fixed_params = {
     "num_agents": 50,
     "retrain_freq": 1,
     "retrain_window": None,
-    "learning_strategy": "balanced"
-    "turbulence": "on"
-    "exploration_increase": "off"
+    "learning_strategy": "balanced",
+    "turbulence": "on",
+    "exploration_increase": "off",
 }
 
 variable_params = {
-    "transparency_fn": [low_transparency, high_transparency],
+    "transparency": [0.5, 0.9],
     "required_majority": [0.7, 0.9],
 }
 
@@ -30,7 +29,7 @@ batch_run = MyBatchRunner(
     iterations=10,
     max_steps=100,
     display_progress=False,
-    model_reporters={"history": track_model_steps, "ACK": calc_code_knowledge, "AHK": calc_avg_knowledge}
+    model_reporters={"history": track_model_steps, "ACK": calc_code_knowledge, "AHK": calc_human_knowledge}
 )
 
 # simulation batch run
