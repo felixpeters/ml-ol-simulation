@@ -1,0 +1,43 @@
+from utils.runners import MyBatchRunner
+from utils.metrics import track_model_steps, calc_code_knowledge,
+calc_human_knowledge
+from models.initial import InitialModel
+
+# constants
+#DATA_PATH = "data/"
+DATA_PATH="/storage/"
+
+# batch run configuration
+fixed_params = {
+    "belief_dimensions": 30,
+    "num_agents": 50,
+    "retrain_freq": 1,
+    "retrain_window": None,
+    "learning_strategy": "balanced"
+    "turbulence": "on"
+    "exploration_increase": "off"
+}
+
+variable_params = {
+    "transparency_fn": [low_transparency, high_transparency],
+    "required_majority": [0.7, 0.9],
+}
+
+batch_run = MyBatchRunner(
+    InitialModel,
+    variable_parameters=variable_params,
+    fixed_parameters=fixed_params,
+    iterations=10,
+    max_steps=100,
+    display_progress=False,
+    model_reporters={"history": track_model_steps, "ACK": calc_code_knowledge, "AHK": calc_avg_knowledge}
+)
+
+# simulation batch run
+total_iter, num_conf, num_iter = batch_run.get_info()
+print(f'Starting simulation with a total of {total_iter} iterations ({num_conf} configurations, {num_iter} iterations per configuration)...')
+batch_run.run_all()
+print(f'Creating data frame from batch run data...')
+df = batch_run.get_tracking_data()
+print(f'Saving data frame ({df.shape[0]} rows, {df.shape[1]} columns) to file...')
+df.to_csv(f"{DATA_PATH}simulation_initial_test.csv")

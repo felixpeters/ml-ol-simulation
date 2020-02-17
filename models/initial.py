@@ -11,11 +11,8 @@ from tqdm import tqdm
 from mesa import Agent, Model
 from mesa.time import BaseScheduler
 from mesa.datacollection import DataCollector
-from mesa.batchrunner import BatchRunner
 
-# constants
-#DATA_PATH = "data/"
-DATA_PATH="/storage/"
+from utils.metrics import calc_knowledge_level
 
 # helper functions
 def random_beliefs(k):
@@ -27,69 +24,11 @@ def random_reality(k):
     a[a == 0] = -1
     return a
 
-def calc_knowledge_level(reality, beliefs):
-    equals = 0
-    for i in range(len(reality)):
-        if reality[i] == beliefs[i]: equals += 1
-    res = float(equals) / float(len(reality))
-    return res
-
-def calc_code_knowledge(model):
-    return model.schedule.agents[1].kl
-
-def calc_avg_knowledge(model):
-    humans = model.human_agents(active_only=True)
-    kls = [h.kl for h in humans]
-    return np.mean(kls)
-
-def track_model_steps(model):
-    return model.datacollector
-
-def calc_ai_knowledge(model):
-    agents = model.ai_agents()
-    total_ai_dims = len(model.ai_dimensions)
-    correct_ai_dims = 0
-    for agent in agents:
-        belief = agent.beliefs[agent.belief_dimension]
-        truth = model.schedule.agents[0].state[agent.belief_dimension]
-        if belief == truth: correct_ai_dims += 1
-    if total_ai_dims == 0:
-        return 0.0
-    else:
-        return correct_ai_dims / total_ai_dims
-
 def high_transparency():
     return 0.9
 
 def low_transparency():
     return 0.1
-
-def get_tracking_data_from_batch(batch_runner):
-    # get number of configurations, runs and steps
-    num_configs = reduce(lambda prod, params: prod * len(params), batch_run.variable_parameters.values(), 1)
-    num_runs = batch_run.iterations
-    num_steps = batch_run.max_steps
-    # create MultiIndex from cross product
-    configs = list(range(1, num_configs+1))
-    runs = list(range(1, num_runs+1))
-    steps = list(range(0, num_steps+1))
-    index = pd.MultiIndex.from_product([configs, runs, steps], names=['config', 'run', 'step'])
-    # assemble data frame from model tracking data
-    df = batch_run.get_model_vars_dataframe()
-    hists = df.loc[:,'history']
-    res_df = pd.DataFrame()
-    for hist in hists:
-        hist_df = pd.DataFrame(hist.model_vars)
-        hist_df = hist_df.drop(columns=["time"])
-        res_df = res_df.append(hist_df)
-    # reset index to created MultiIndex
-    res_df.index = index
-    return res_df
-
-def get_batch_run_info(batch_runner):
-    num_configs = reduce(lambda prod, params: prod * len(params), batch_run.variable_parameters.values(), 1)
-    num_runs = batch_run.iterations
-    return (num_configs * num_runs, num_configs, num_runs)
 
 # model classes
 class Human(Agent):
@@ -285,8 +224,7 @@ class ArtificialIntelligence(Agent):
         if (freq != None) and (self.lifetime % freq == 0):
             self.retrain()
 
-
-class ExtendedAIModel(Model):
+class InitialModel(Model):
     """ Extended AI model with feature toggling. """
     
     # initialization functions
@@ -483,65 +421,3 @@ class ExtendedAIModel(Model):
             print(e)
             print("Model configuration:")
             print(self.conf)
-
-# Batch runner
-class MyBatchRunner(BatchRunner):
-    def __init__(self, model_cls, **kwargs):
-        super().__init__(model_cls, **kwargs)
-
-    def run_all(self):
-        run_count = count()
-        counter = 1
-        start = datetime.datetime.now()
-        total_iterations, all_kwargs, all_param_values = self._make_model_args()
-        print('{"chart": "Progress", "axis": "Minutes"}')
-        print('{"chart": "Speed", "axis": "Iterations"}')
-
-        with tqdm(total_iterations, disable=not self.display_progress) as pbar:
-            for i, kwargs in enumerate(all_kwargs):
-                param_values = all_param_values[i]
-                for _ in range(self.iterations):
-                    self.run_iteration(kwargs, param_values, next(run_count))
-                    duration = datetime.datetime.now() - start
-                    seconds = duration.seconds
-                    minutes = seconds / 60
-                    if counter % 50 == 0:
-                        print(f'{{"chart": "Progress", "y": {counter / total_iterations * 100}, "x": {minutes}}}')
-                        print(f'{{"chart": "Speed", "y": {counter / seconds}, "x": {counter}}}')
-                    counter += 1
-                    pbar.update()
-
-# batch run configuration
-fixed_params = {
-    "belief_dimensions": 30,
-    "num_agents": 50,
-    "retrain_freq": 1,
-    "retrain_window": None,
-}
-
-variable_params = {
-    "learning_strategy": ["balanced", "exploration", "exploitation", "restricted_exploitation"],
-    "turbulence": ["on", "off"],
-    "transparency_fn": [low_transparency, high_transparency],
-    "exploration_increase": ["on", "off"],
-    "required_majority": [0.7, 0.9],
-}
-
-batch_run = MyBatchRunner(
-    ExtendedAIModel,
-    variable_parameters=variable_params,
-    fixed_parameters=fixed_params,
-    iterations=30,
-    max_steps=80,
-    display_progress=False,
-    model_reporters={"history": track_model_steps, "ACK": calc_code_knowledge, "AHK": calc_avg_knowledge}
-)
-
-# simulation batch run
-total_iter, num_conf, num_iter = get_batch_run_info(batch_run)
-print(f'Starting simulation with a total of {total_iter} iterations ({num_conf} configurations, {num_iter} iterations per configuration)...')
-batch_run.run_all()
-print(f'Creating data frame from batch run data...')
-df = get_tracking_data_from_batch(batch_run)
-print(f'Saving data frame ({df.shape[0]} rows, {df.shape[1]} columns) to file...')
-df.to_csv(f"{DATA_PATH}simulation_v8_raw.csv")
