@@ -1,12 +1,15 @@
 import time
+import os
+
+from mesa.batchrunner import BatchRunnerMP
+
 from utils.runners import get_info, get_tracking_data
 from utils.metrics import track_model_steps, calc_code_knowledge, calc_human_knowledge
 from models.initial import InitialModel
-from mesa.batchrunner import BatchRunnerMP
 
 # constants
 DATA_PATH = "data/"
-#DATA_PATH="/storage/"
+CPU_COUNT = os.cpu_count() or 2
 
 # batch run configuration
 fixed_params = {
@@ -26,6 +29,7 @@ variable_params = {
 
 batch_run = BatchRunnerMP(
     InitialModel,
+    nr_processes=CPU_COUNT,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
     iterations=5,
@@ -36,7 +40,9 @@ batch_run = BatchRunnerMP(
 
 # simulation batch run
 total_iter, num_conf, num_iter = get_info(batch_run)
-print(f'Starting simulation with a total of {total_iter} iterations ({num_conf} configurations, {num_iter} iterations per configuration)')
+print(f'Starting simulation with the following setup:\n- Total number of
+        iterations: {total_iter}\n- Number of configurations: {num_conf}\n-
+        Iterations per configuration: {num_iter}\n- Number of processing cores: {CPU_COUNT}')
 start = time.time()
 batch_run.run_all()
 end = time.time()
