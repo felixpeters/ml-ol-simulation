@@ -36,13 +36,14 @@ batch_run = BatchRunner(
 
 # simulation batch run
 total_iter, num_conf, num_iter = get_info(batch_run)
-print(f'Starting simulation with a total of {total_iter} iterations ({num_conf} configurations, {num_iter} iterations per configuration)...')
+print(f'Starting simulation with a total of {total_iter} iterations ({num_conf} configurations, {num_iter} iterations per configuration)')
 start = time.time()
 batch_run.run_all()
 end = time.time()
-print(f'Simulation complete after {end-start:.2f} seconds')
-print(f'Creating data frame from batch run data...')
+print(f'Simulation completed after {end-start:.2f} seconds')
 df = get_tracking_data(batch_run)
-print(f'Saving data frame ({df.shape[0]} rows, {df.shape[1]} columns) to file...')
+print(f'Created dataframe from batch run data')
 timestr = time.strftime("%Y%m%d-%H%M%S")
-df.to_csv(f"{DATA_PATH}ai_simulation_{timestr}.csv")
+fname = f"{DATA_PATH}ai_simulation_{timestr}.csv"
+df.to_csv(fname)
+print(f'Saved dataframe ({df.shape[0]} rows, {df.shape[1]} columns) to file {fname}')
