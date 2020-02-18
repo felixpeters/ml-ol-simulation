@@ -9,5 +9,6 @@ conda config --env --add channels conda-forge
 conda config --env --set channel_priority strict
 
 # install packages
+pip install pathos
 pip install mesa
 conda install pandas notebook scipy numpy

@@ -2,7 +2,7 @@ import time
 from utils.runners import get_info, get_tracking_data
 from utils.metrics import track_model_steps, calc_code_knowledge, calc_human_knowledge
 from models.initial import InitialModel
-from mesa.batchrunner import BatchRunner
+from mesa.batchrunner import BatchRunnerMP
 
 # constants
 DATA_PATH = "data/"
@@ -24,7 +24,7 @@ variable_params = {
     "transparency": [0.5, 0.9],
 }
 
-batch_run = BatchRunner(
+batch_run = BatchRunnerMP(
     InitialModel,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
