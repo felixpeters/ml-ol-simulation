@@ -13,16 +13,8 @@ from mesa.time import BaseScheduler
 from mesa.datacollection import DataCollector
 
 from utils.metrics import *
+from utils.agents import *
 
-# helper functions
-def random_beliefs(k):
-    a = np.random.randint(-1, 2, k)
-    return a
-
-def random_reality(k):
-    a = np.random.randint(0, 2, k)
-    a[a == 0] = -1
-    return a
 
 # model classes
 class Human(Agent):
