@@ -1,6 +1,6 @@
 import numpy as np
 
-def calc_knowledge_level(reality, beliefs):
+def calc_kl(reality, beliefs):
     equals = 0
     for i in range(len(reality)):
         if reality[i] == beliefs[i]: equals += 1
@@ -10,10 +10,10 @@ def calc_knowledge_level(reality, beliefs):
 def track_model_steps(model):
     return model.datacollector
 
-def calc_code_knowledge(model):
+def calc_code_kl(model):
     return model.schedule.agents[1].kl
 
-def calc_human_knowledge(model):
+def calc_human_kl(model):
     humans = model.human_agents(active_only=True)
     kls = [h.kl for h in humans]
     return np.mean(kls)
