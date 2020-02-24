@@ -14,7 +14,7 @@ def calc_code_kl(model):
     return model.schedule.agents[1].kl
 
 def calc_human_kl(model):
-    humans = model.human_agents(active_only=True)
+    humans = model.schedule.agents[2:(2 + model.conf["num_humans"])]
     kls = [h.kl for h in humans]
     return np.mean(kls)
 

@@ -14,7 +14,7 @@ class Reality(Agent):
 
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
-        self.state = random_reality(model.conf['belief_dimensions'])
+        self.state = random_reality(model.conf['belief_dims'])
         self.kl = 1.0
 
     def step(self):
@@ -24,10 +24,10 @@ class OrganizationalCode(Agent):
 
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
-        self.state = np.zeros(model.conf['belief_dimensions'], dtype=np.int64)
+        self.state = np.zeros(model.conf['belief_dims'], dtype=np.int64)
         self.update_kl()
 
-    def update_kl(self)
+    def update_kl(self):
         self.kl = calc_kl(self.model.schedule.agents[0].state, self.state)
         return
 
@@ -56,7 +56,7 @@ class Human(Agent):
 
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
-        self.state = random_beliefs(model.conf['belief_dimensions'])
+        self.state = random_beliefs(model.conf['belief_dims'])
         self.lr_hum_org = model.conf["lr_hum_org"]
         self.update_kl()
 
@@ -75,9 +75,9 @@ class Human(Agent):
 
     def learn_randomly(self, dim):
         if np.random.binomial(1, 0.5):
-            self.learn_from_data(i)
+            self.learn_from_data(dim)
         else:
-            self.learn_from_code(i)
+            self.learn_from_code(dim)
         return
 
     def learn_from_data(self, dim):
@@ -101,6 +101,7 @@ class Human(Agent):
 class ModernMarchModel(Model):
 
     def __init__(
+            self,
             num_humans=50, 
             belief_dims=30, 
             lr_hum_org=0.1, 
@@ -124,6 +125,12 @@ class ModernMarchModel(Model):
     def get_config(self, param, *args):
         return self.conf[param]
 
+    get_belief_dims = partialmethod(get_config, "belief_dims") 
+    get_num_humans = partialmethod(get_config, "num_humans") 
+    get_lr_hum_org = partialmethod(get_config, "lr_hum_org") 
+    get_lr_org_hum = partialmethod(get_config, "lr_org_hum") 
+    get_lr_hum_dat = partialmethod(get_config, "lr_hum_dat") 
+
     def get_time(self, *args):
         return int(self.schedule.time)
 
@@ -141,11 +148,11 @@ class ModernMarchModel(Model):
         self.datacollector = DataCollector(
                 model_reporters = {
                     "time": self.get_time,
-                    "belief_dims": partialmethod(config, "belief_dims"),
-                    "num_humans": partialmethod(config, "num_humans"),
-                    "lr_hum_org": partialmethod(config, "lr_hum_org"),
-                    "lr_org_hum": partialmethod(config, "lr_org_hum"),
-                    "lr_hum_dat": partialmethod(config, "lr_hum_dat"),
+                    "belief_dims": self.get_belief_dims,
+                    "num_humans": self.get_num_humans,
+                    "lr_hum_org": self.get_lr_hum_org,
+                    "lr_org_hum": self.get_lr_org_hum,
+                    "lr_hum_dat": self.get_lr_hum_dat,
                     "code_kl": calc_code_kl,
                     "human_kl": calc_human_kl,
                 }
@@ -153,7 +160,7 @@ class ModernMarchModel(Model):
         return
 
     def get_exp_grp(self):
-        humans = self.schedule.agents[2:(2 + self.conf["num_agents"])]
+        humans = self.schedule.agents[2:(2 + self.conf["num_humans"])]
         code = self.schedule.agents[1]
         return list(filter(lambda h: (h.kl > code.kl), humans))
 
@@ -161,7 +168,7 @@ class ModernMarchModel(Model):
         try:
             self.exp_grp = self.get_exp_grp()
             self.schedule.step()
-            self.dc.collect(self)
+            self.datacollector.collect(self)
         except Exception as e:
             print("The following error occurred:")
             print(e)
