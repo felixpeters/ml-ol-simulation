@@ -157,6 +157,7 @@ class ModernMarchModel(Model):
                     "human_kl": calc_human_kl,
                 }
         )
+        self.datacollector.collect(self)
         return
 
     def get_exp_grp(self):
