@@ -107,6 +107,7 @@ class ModernMarchModel(Model):
             p_1=0.1, 
             p_2=0.9,
             p_hp=0.1,
+            p_hm=0.1,
         ):
         np.random.seed()
         random.seed()
@@ -116,6 +117,7 @@ class ModernMarchModel(Model):
                 "p_1": p_1,
                 "p_2": p_2,
                 "p_hp": p_hp,
+                "p_hm": p_hm,
         }
         self.running = True
         self.schedule = BaseScheduler(self)
@@ -130,6 +132,7 @@ class ModernMarchModel(Model):
     get_p_1 = partialmethod(get_config, "p_1") 
     get_p_2 = partialmethod(get_config, "p_2") 
     get_p_hp = partialmethod(get_config, "p_hp") 
+    get_p_hm = partialmethod(get_config, "p_hm") 
 
     def get_time(self, *args):
         return int(self.schedule.time)
@@ -153,6 +156,7 @@ class ModernMarchModel(Model):
                     "p_1": self.get_p_1,
                     "p_2": self.get_p_2,
                     "p_hp": self.get_p_hp,
+                    "p_hm": self.get_p_hm,
                     "code_kl": calc_code_kl,
                     "human_kl": calc_human_kl,
                 }

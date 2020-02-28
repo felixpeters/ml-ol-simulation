@@ -21,6 +21,7 @@ variable_params = {
     "p_1": [0.2, 0.5, 0.8],
     "p_2": [0.2, 0.5, 0.8],
     "p_hp": [0.05, 0.1],
+    "p_hm": [0.05, 0.1],
 }
 
 batch_run = BatchRunnerMP(
