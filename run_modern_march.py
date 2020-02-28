@@ -50,6 +50,6 @@ print(f'Simulation completed after {duration:.2f} seconds (speed: {total_iter/du
 df = get_tracking_data(batch_run)
 print(f'Created dataframe from batch run data')
 timestr = time.strftime("%Y%m%d-%H%M%S")
-fname = f"{DATA_PATH}modern_march_{timestr}.csv"
+fname = f"{DATA_PATH}modern_march_raw_{timestr}.csv"
 df.to_csv(fname)
 print(f'Saved dataframe ({df.shape[0]} rows, {df.shape[1]} columns) to file {fname}')
