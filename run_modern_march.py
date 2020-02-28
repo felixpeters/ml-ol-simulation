@@ -18,9 +18,9 @@ fixed_params = {
 }
 
 variable_params = {
-    "lr_hum_org": [0.1, 0.5, 0.9],
-    "lr_org_hum": [0.1, 0.5, 0.9],
-    "lr_hum_dat": [0.05, 0.1],
+    "p_1": [0.2, 0.5, 0.8],
+    "p_2": [0.2, 0.5, 0.8],
+    "p_hp": [0.05, 0.1],
 }
 
 batch_run = BatchRunnerMP(
@@ -28,9 +28,9 @@ batch_run = BatchRunnerMP(
     nr_processes=CPU_COUNT,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
-    iterations=5,
+    iterations=100,
     max_steps=100,
-    display_progress=False,
+    display_progress=True,
     model_reporters={"history": track_model_steps, "ACK": calc_code_kl, "AHK": calc_human_kl}
 )
 
@@ -44,7 +44,8 @@ print(f'- Number of processing cores: {CPU_COUNT}')
 start = time.time()
 batch_run.run_all()
 end = time.time()
-print(f'Simulation completed after {end-start:.2f} seconds')
+duration = end - start
+print(f'Simulation completed after {duration:.2f} seconds (speed: {total_iter/duration:.2f} iterations/second)')
 df = get_tracking_data(batch_run)
 print(f'Created dataframe from batch run data')
 timestr = time.strftime("%Y%m%d-%H%M%S")

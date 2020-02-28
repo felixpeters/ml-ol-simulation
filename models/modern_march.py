@@ -32,7 +32,7 @@ class OrganizationalCode(Agent):
         return
 
     def learn(self):
-        lr_org_hum = self.model.conf["lr_org_hum"]
+        p_2 = self.model.conf["p_2"]
         exp_grp = self.model.get_exp_grp()
         for i in range(len(self.state)):
             exp_grp_dim = list(filter(lambda h: (h.state[i] != 0), exp_grp))
@@ -43,7 +43,7 @@ class OrganizationalCode(Agent):
                 if maj != self.state[i]:
                     size_min = 0
                     if len(c.most_common()) > 1: _, size_min = c.most_common()[1]
-                    p_update = 1 - (1 - lr_org_hum) ** (size_maj - size_min)
+                    p_update = 1 - (1 - p_2) ** (size_maj - size_min)
                     if np.random.binomial(1, p_update): self.state[i] = maj
         return
 
@@ -57,7 +57,7 @@ class Human(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.state = random_beliefs(model.conf['belief_dims'])
-        self.lr_hum_org = model.conf["lr_hum_org"]
+        self.p_1 = model.conf["p_1"]
         self.update_kl()
 
     def update_kl(self):
@@ -82,16 +82,16 @@ class Human(Agent):
 
     def learn_from_data(self, dim):
         data = self.model.schedule.agents[0]
-        lr_hum_dat = self.model.conf["lr_hum_dat"]
+        p_hp = self.model.conf["p_hp"]
         if self.state[dim] != data.state[dim]:
-            if np.random.binomial(1, lr_hum_dat): self.state[dim] = data.state[dim]
+            if np.random.binomial(1, p_hp): self.state[dim] = data.state[dim]
         return
 
     def learn_from_code(self, dim):
         code = self.model.schedule.agents[1]
-        lr_hum_org = self.model.conf["lr_hum_org"]
+        p_1 = self.model.conf["p_1"]
         if self.state[dim] != code.state[dim] and code.state[dim] != 0:
-            if np.random.binomial(1, lr_hum_org): self.state[dim] = code.state[dim]
+            if np.random.binomial(1, p_1): self.state[dim] = code.state[dim]
         return
 
     def step(self):
@@ -104,18 +104,18 @@ class ModernMarchModel(Model):
             self,
             num_humans=50, 
             belief_dims=30, 
-            lr_hum_org=0.1, 
-            lr_org_hum=0.9,
-            lr_hum_dat=0.1,
+            p_1=0.1, 
+            p_2=0.9,
+            p_hp=0.1,
         ):
         np.random.seed()
         random.seed()
         self.conf = {
                 "num_humans": num_humans,
                 "belief_dims": belief_dims,
-                "lr_hum_org": lr_hum_org,
-                "lr_org_hum": lr_org_hum,
-                "lr_hum_dat": lr_hum_dat,
+                "p_1": p_1,
+                "p_2": p_2,
+                "p_hp": p_hp,
         }
         self.running = True
         self.schedule = BaseScheduler(self)
@@ -127,9 +127,9 @@ class ModernMarchModel(Model):
 
     get_belief_dims = partialmethod(get_config, "belief_dims") 
     get_num_humans = partialmethod(get_config, "num_humans") 
-    get_lr_hum_org = partialmethod(get_config, "lr_hum_org") 
-    get_lr_org_hum = partialmethod(get_config, "lr_org_hum") 
-    get_lr_hum_dat = partialmethod(get_config, "lr_hum_dat") 
+    get_p_1 = partialmethod(get_config, "p_1") 
+    get_p_2 = partialmethod(get_config, "p_2") 
+    get_p_hp = partialmethod(get_config, "p_hp") 
 
     def get_time(self, *args):
         return int(self.schedule.time)
@@ -150,9 +150,9 @@ class ModernMarchModel(Model):
                     "time": self.get_time,
                     "belief_dims": self.get_belief_dims,
                     "num_humans": self.get_num_humans,
-                    "lr_hum_org": self.get_lr_hum_org,
-                    "lr_org_hum": self.get_lr_org_hum,
-                    "lr_hum_dat": self.get_lr_hum_dat,
+                    "p_1": self.get_p_1,
+                    "p_2": self.get_p_2,
+                    "p_hp": self.get_p_hp,
                     "code_kl": calc_code_kl,
                     "human_kl": calc_human_kl,
                 }
