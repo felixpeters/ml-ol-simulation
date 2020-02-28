@@ -84,12 +84,11 @@ class Human(Agent):
         data = self.model.schedule.agents[0]
         p_hp = self.model.conf["p_hp"]
         p_hm = self.model.conf["p_hm"]
-        if self.state[dim] != data.state[dim]:
-            if np.random.binomial(1, p_hp): 
-                self.state[dim] = data.state[dim]
-            else:
-                if np.random.binomial(1, p_hm):
-                    self.state[dim] = (-1) * data.state[dim]
+        if np.random.binomial(1, p_hp): 
+            self.state[dim] = data.state[dim]
+        else:
+            if np.random.binomial(1, p_hm):
+                self.state[dim] = (-1) * data.state[dim]
         return
 
     def learn_from_code(self, dim):
