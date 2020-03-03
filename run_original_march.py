@@ -31,7 +31,7 @@ batch_run = BatchRunnerMP(
     iterations=30,
     max_steps=100,
     display_progress=True,
-    model_reporters={"history": track_model_steps, "ACK": calc_code_kl, "AHK": calc_human_kl}
+    model_reporters={"history": track_model_steps, "ACK": calc_code_kl, "AHK": calc_human_kl, "VHK": calc_kl_var}
 )
 
 # simulation batch run

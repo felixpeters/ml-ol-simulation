@@ -163,6 +163,7 @@ class ModernMarchModel(Model):
                     "p_hm": self.get_p_hm,
                     "code_kl": calc_code_kl,
                     "human_kl": calc_human_kl,
+                    "human_kl_var": calc_kl_var,
                 }
         )
         self.datacollector.collect(self)

@@ -35,4 +35,6 @@ def calc_dissimilarity(model):
     return
 
 def calc_kl_var(model):
-    return
+    humans = model.schedule.agents[2:(2 + model.conf["num_humans"])]
+    kls = [h.kl for h in humans]
+    return np.var(kls)
