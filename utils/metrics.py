@@ -31,3 +31,8 @@ def calc_ai_knowledge(model):
     else:
         return correct_ai_dims / total_ai_dims
 
+def calc_dissimilarity(model):
+    return
+
+def calc_kl_var(model):
+    return

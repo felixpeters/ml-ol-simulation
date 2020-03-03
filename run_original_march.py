@@ -6,7 +6,7 @@ from mesa.batchrunner import BatchRunnerMP
 from utils.runners import get_info, get_tracking_data
 from utils.metrics import track_model_steps, calc_code_kl, calc_human_kl
 from utils.analysis import preprocess_dataset
-from models.modern_march import ModernMarchModel
+from models.original_march import OriginalMarchModel
 
 # constants
 DATA_PATH = "data/"
@@ -21,12 +21,10 @@ fixed_params = {
 variable_params = {
     "p_1": [0.1, 0.5, 0.9],
     "p_2": [0.1, 0.5, 0.9],
-    "p_hp": [0.1, 0.3],
-    "p_hm": [0.1, 0.3],
 }
 
 batch_run = BatchRunnerMP(
-    ModernMarchModel,
+    OriginalMarchModel,
     nr_processes=CPU_COUNT,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
@@ -53,7 +51,7 @@ print(f'Simulation completed after {duration:.2f} seconds (speed: {total_iter/du
 df = get_tracking_data(batch_run)
 print(f'Created dataframe from batch run data')
 timestr = time.strftime("%Y%m%d-%H%M%S")
-fname = f"{DATA_PATH}modern_march_raw_{timestr}.csv"
+fname = f"{DATA_PATH}original_march_raw_{timestr}.csv"
 df.to_csv(fname)
 print(f'Saved raw dataframe ({df.shape[0]} rows, {df.shape[1]} columns) to file {fname}')
 
@@ -63,8 +61,6 @@ time_aggs = {
     "num_humans": "last",
     "p_1": "mean",
     "p_2": "mean",
-    "p_hp": "mean",
-    "p_hm": "mean",
     "code_kl": ["max", "last"],
     "human_kl": ["max", "last"],
 }
@@ -73,13 +69,11 @@ col_names = {
     "num_humans_last": "num_humans",
     "p_1_mean": "p_1",
     "p_2_mean": "p_2",
-    "p_hp_mean": "p_hp",
-    "p_hm_mean": "p_hm",
 }
 time_data, agg_data = preprocess_dataset(fname, time_aggs, col_names)
-time_fname = f"{DATA_PATH}modern_march_ts_{timestr}.csv"
+time_fname = f"{DATA_PATH}original_march_ts_{timestr}.csv"
 time_data.to_csv(time_fname)
 print(f'Saved time-series dataframe ({time_data.shape[0]} rows, {time_data.shape[1]} columns) to file {time_fname}')
-agg_fname = f"{DATA_PATH}modern_march_agg_{timestr}.csv"
+agg_fname = f"{DATA_PATH}original_march_agg_{timestr}.csv"
 agg_data.to_csv(agg_fname)
 print(f'Saved aggregated dataframe ({agg_data.shape[0]} rows, {agg_data.shape[1]} columns) to file {agg_fname}')
