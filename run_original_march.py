@@ -31,7 +31,13 @@ batch_run = BatchRunnerMP(
     iterations=30,
     max_steps=100,
     display_progress=True,
-    model_reporters={"history": track_model_steps, "ACK": calc_code_kl, "AHK": calc_human_kl, "VHK": calc_kl_var}
+    model_reporters={
+        "history": track_model_steps, 
+        "ACK": calc_code_kl, 
+        "AHK": calc_human_kl, 
+        "VHK": calc_kl_var,
+        "DISSIM": calc_dissim,
+    },
 )
 
 # simulation batch run
@@ -64,6 +70,7 @@ time_aggs = {
     "code_kl": ["max", "last"],
     "human_kl": ["max", "last"],
     "human_kl_var": ["max", "last"],
+    "human_kl_dissim": ["max", "last"],
 }
 col_names = {
     "belief_dims_mean": "belief_dims",

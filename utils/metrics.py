@@ -31,8 +31,15 @@ def calc_ai_knowledge(model):
     else:
         return correct_ai_dims / total_ai_dims
 
-def calc_dissimilarity(model):
-    return
+def calc_dissim(model):
+    num_humans = model.conf["num_humans"]
+    num_dims = model.conf["belief_dims"]
+    humans = model.schedule.agents[2:(2 + num_humans)]
+    beliefs = np.vstack([h.state for h in humans])
+    rows, cols = np.triu_indices(num_humans, 1)
+    comp_sum = np.sum(beliefs[rows] != beliefs[cols])
+    coeff = 2 / (num_dims * num_humans * (num_humans - 1))
+    return coeff * comp_sum
 
 def calc_kl_var(model):
     humans = model.schedule.agents[2:(2 + model.conf["num_humans"])]
