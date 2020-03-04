@@ -13,8 +13,10 @@ def preprocess_dataset(path, time_aggs, col_names):
     data = data.drop(columns=['config', 'run', 'step'])
     # aggregate over runs
     time_data = data.groupby(level=[0, 2]).agg('mean')
+    time_data = time_data.round(2)
     # aggregate over time steps
     agg_data = time_data.groupby(level=0).agg(time_aggs)
+    agg_data = agg_data.round(2)
     agg_data.columns = ['_'.join(col).strip() for col in agg_data.columns.values]
     agg_data.rename(columns=col_names, inplace=True)
     return time_data, agg_data
