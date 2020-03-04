@@ -4,7 +4,7 @@ import os
 from mesa.batchrunner import BatchRunnerMP
 
 from utils.runners import get_info, get_tracking_data
-from utils.metrics import track_model_steps, calc_code_kl, calc_human_kl
+from utils.metrics import *
 from utils.analysis import preprocess_dataset
 from models.modern_march import ModernMarchModel
 
@@ -67,6 +67,7 @@ time_aggs = {
     "p_hm": "mean",
     "code_kl": ["max", "last"],
     "human_kl": ["max", "last"],
+    "human_kl_var": ["max", "last"],
 }
 col_names = {
     "belief_dims_mean": "belief_dims",
