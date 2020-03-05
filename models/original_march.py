@@ -66,7 +66,6 @@ class Human(Agent):
         super().__init__(unique_id, model)
         # initialize randomly with -1, 0 or 1
         self.state = random_beliefs(model.conf['belief_dims'])
-        self.p_1 = model.conf["p_1"]
         self.update_kl()
 
     def update_kl(self):
