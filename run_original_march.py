@@ -8,16 +8,18 @@ from utils.metrics import *
 from utils.analysis import preprocess_dataset
 from models.original_march import OriginalMarchModel
 
-# constants
+# collected data will be saved in this folder
 DATA_PATH = "data/"
+# get the number of available CPUs for multi-processing
 CPU_COUNT = os.cpu_count() or 2
 
-# batch run configuration
+# fixed parameters
 fixed_params = {
     "belief_dims": 30,
     "num_humans": 50,
 }
 
+# variable parameters defining each configuration
 variable_params = {
     "p_1": [0.1, 0.5, 0.9],
     "p_2": [0.1, 0.5, 0.9],
