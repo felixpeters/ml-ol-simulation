@@ -1,4 +1,5 @@
 #!/bin/bash
+RUN_SCRIPT=$1
 source /etc/profile.d/conda.sh
 conda activate misq_sim
-python run_original_march.py
+python $RUN_SCRIPT
