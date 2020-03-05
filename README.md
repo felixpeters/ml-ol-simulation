@@ -43,9 +43,9 @@ run-image RUN_SCRIPT=run_original_march.py` (replace script name for executing
 other models)
 2. You have to build and run the Docker container manually:
     - Run `docker build -t felixpeters/ai-sim .` to build the image
-    - Run docker run --rm -it --name ai-sim-runner -v `pwd`/data:/ai-sim/data
+    - Run `docker run --rm -it --name ai-sim-runner -v \`pwd\`/data:/ai-sim/data
       felixpeters/ai-sim:latest /bin/bash -c "/bin/bash run.sh
-      run_original_march.py"
+      run_original_march.py"`
 
 ## Contact
 
