@@ -21,6 +21,32 @@ calculations
 
 ## Setup
 
+All simulations are run in Docker containers in order to create a standardized
+and reproducible environment. The following steps are needed in order to run
+simulations:
+1. Clone repository to target machine: `git clone
+git@github.com:felixpeters/ml-ol-simulation.git`
+2. Create `data` folder in repository root: `mkdir data` (on UNIX-based systems)
+3. Install Docker if not already done: [installation
+instructions](https://docs.docker.com/install/)
+
 ## Running simulations
 
+The logic for running simulations is included in the running scripts (starting
+with `run_`) in the project root. These scripts are meant to be executed inside
+the Docker container and contain all necessary configuration (i.e., parameter
+levels defining configurations, number of iterations for each configuration).
+
+There are two ways of executing the running scripts:
+1. (if [Make](https://www.gnu.org/software/make/) is installed) Run `make
+run-image RUN_SCRIPT=run_original_march.py` (replace script name for executing
+other models)
+2. You have to build and run the Docker container manually:
+    - Run `docker build -t felixpeters/ai-sim .` to build the image
+    - Run docker run --rm -it --name ai-sim-runner -v `pwd`/data:/ai-sim/data
+      felixpeters/ai-sim:latest /bin/bash -c "/bin/bash run.sh
+      run_original_march.py"
+
 ## Contact
+
+Email: [peters@is.tu-darmstadt.de](mailto:peters@is.tu-darmstadt.de)
