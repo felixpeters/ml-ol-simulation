@@ -3,7 +3,7 @@ import pandas as pd
 def preprocess_dataset(path, time_aggs, col_names):
     data = pd.read_csv(path)
     # round values to enable secure indexing
-    data = data.round(2)
+    data = data.round(4)
     # reindex
     configs = pd.unique(data.config)
     runs = pd.unique(data.run)
@@ -13,10 +13,10 @@ def preprocess_dataset(path, time_aggs, col_names):
     data = data.drop(columns=['config', 'run', 'step'])
     # aggregate over runs
     time_data = data.groupby(level=[0, 2]).agg('mean')
-    time_data = time_data.round(2)
+    time_data = time_data.round(4)
     # aggregate over time steps
     agg_data = time_data.groupby(level=0).agg(time_aggs)
-    agg_data = agg_data.round(2)
+    agg_data = agg_data.round(4)
     agg_data.columns = ['_'.join(col).strip() for col in agg_data.columns.values]
     agg_data.rename(columns=col_names, inplace=True)
     return time_data, agg_data
