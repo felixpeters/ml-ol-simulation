@@ -52,7 +52,7 @@ class OrganizationalCode(Agent):
             elif (i not in ml_dims) and (len(exp_grp_dim) > 0):
                 self.learn_from_humans(i, exp_grp_dim)
             # if no ML is present and expert group has no belief: do nothing
-            return
+        return
 
     def learn_from_humans(self, dim, exp_grp_dim):
         p_2 = self.model.conf["p_2"]
