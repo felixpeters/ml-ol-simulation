@@ -110,16 +110,16 @@ class Human(Agent):
 
     def learn_from_data(self, dim):
         data = self.model.schedule.agents[0]
-        p_hp = self.model.conf["p_hp"]
-        p_hm = self.model.conf["p_hm"]
-        # 1. learn correct value with given p_h+
-        if np.random.binomial(1, p_hp): 
-            self.state[dim] = data.state[dim]
-        else:
-            # 2. learn incorrect value with given p_h-
-            if np.random.binomial(1, p_hm):
+        p_h1 = self.model.conf["p_h1"]
+        p_h2 = self.model.conf["p_h2"]
+        # learn with probability p_h1
+        if np.random.binomial(1, p_h1): 
+            # learn correct value with probability p_h2, incorrect value
+            # otherwise
+            if np.random.binomial(1, p_h2):
+                self.state[dim] = data.state[dim]
+            else:
                 self.state[dim] = (-1) * data.state[dim]
-        # 3. learn nothing otherwise
         return
 
     def learn_from_code(self, dim):
@@ -177,8 +177,8 @@ class BasicMLModel(Model):
             p_1=0.1, 
             p_2=0.9,
             p_3=0.9,
-            p_hp=0.1,
-            p_hm=0.1,
+            p_h1=0.1,
+            p_h2=0.1,
             p_ml=0.5,
         ):
         # reset random seeds prior to each iteration
@@ -192,8 +192,8 @@ class BasicMLModel(Model):
                 "p_1": p_1,
                 "p_2": p_2,
                 "p_3": p_3,
-                "p_hp": p_hp,
-                "p_hm": p_hm,
+                "p_h1": p_h1,
+                "p_h2": p_h2,
                 "p_ml": p_ml,
         }
         self.running = True
@@ -212,8 +212,8 @@ class BasicMLModel(Model):
     get_p_1 = partialmethod(get_config, "p_1") 
     get_p_2 = partialmethod(get_config, "p_2") 
     get_p_3 = partialmethod(get_config, "p_3") 
-    get_p_hp = partialmethod(get_config, "p_hp") 
-    get_p_hm = partialmethod(get_config, "p_hm") 
+    get_p_h1 = partialmethod(get_config, "p_h1") 
+    get_p_h2 = partialmethod(get_config, "p_h2") 
     get_p_ml = partialmethod(get_config, "p_ml") 
 
     def get_time(self, *args):
@@ -250,8 +250,8 @@ class BasicMLModel(Model):
                     "p_1": self.get_p_1,
                     "p_2": self.get_p_2,
                     "p_3": self.get_p_3,
-                    "p_hp": self.get_p_hp,
-                    "p_hm": self.get_p_hm,
+                    "p_h1": self.get_p_h1,
+                    "p_h2": self.get_p_h2,
                     "p_ml": self.get_p_ml,
                     "code_kl": calc_code_kl,
                     "human_kl": calc_human_kl,

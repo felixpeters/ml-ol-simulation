@@ -17,17 +17,17 @@ CPU_COUNT = os.cpu_count() or 2
 fixed_params = {
     "belief_dims": 30,
     "num_humans": 50,
-    "p_hp": 0.1,
-    "p_hm": 0.1,
+    "p_h1": 0.1,
+    "p_h2": 0.5,
 }
 
 # variable parameters defining each configuration
 variable_params = {
-    "num_ml": [5, 10, 15, 30],
-    "p_1": [0.1, 0.5, 0.9],
-    "p_2": [0.1, 0.5, 0.9],
-    "p_3": [0.1, 0.5, 0.9],
-    "p_ml": [0.05, 0.2, 0.5, 0.8],
+    "num_ml": [5, 15, 30],
+    "p_1": [0.1, 0.3, 0.5, 0.7, 0.9],
+    "p_2": [0.1, 0.3, 0.5, 0.7, 0.9],
+    "p_3": [0.1, 0.3, 0.5, 0.7, 0.9],
+    "p_ml": [0.2, 0.5, 0.8, 1.0],
 }
 
 batch_run = BatchRunnerMP(
@@ -35,15 +35,11 @@ batch_run = BatchRunnerMP(
     nr_processes=CPU_COUNT,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
-    iterations=80,
-    max_steps=125,
+    iterations=1,
+    max_steps=175,
     display_progress=True,
     model_reporters={
         "history": track_model_steps, 
-        "ACK": calc_code_kl, 
-        "AHK": calc_human_kl, 
-        "VHK": calc_kl_var,
-        "DISSIM": calc_dissim,
     },
 )
 
@@ -64,11 +60,24 @@ print(f'Simulation completed after {duration:.2f} seconds (speed: {total_iter/du
 df = get_tracking_data(batch_run)
 print(f'Created dataframe from batch run data')
 timestr = time.strftime("%Y%m%d-%H%M%S")
-fname = f"{DATA_PATH}basic_ml_raw_{timestr}.csv"
-df.to_csv(fname)
-print(f'Saved raw dataframe ({df.shape[0]} rows, {df.shape[1]} columns) to file {fname}')
+print(f'Created raw dataframe with following shape: {df.shape[0]} rows, {df.shape[1]} columns')
 
 # data preprocessing
+run_aggs = {
+    "belief_dims": "mean",
+    "num_humans": "mean",
+    "num_ml": "mean",
+    "p_1": "mean",
+    "p_2": "mean",
+    "p_3": "mean",
+    "p_h1": "mean",
+    "p_h2": "mean",
+    "p_ml": "mean",
+    "code_kl": ["mean", "std"],
+    "human_kl": ["mean", "std"],
+    "human_kl_var": "mean",
+    "human_kl_dissim": "mean",
+}
 time_aggs = {
     "belief_dims": "mean",
     "num_humans": "last",
@@ -76,26 +85,36 @@ time_aggs = {
     "p_1": "mean",
     "p_2": "mean",
     "p_3": "mean",
-    "p_hp": "mean",
-    "p_hm": "mean",
+    "p_h1": "mean",
+    "p_h2": "mean",
     "p_ml": "mean",
     "code_kl": ["max", "last"],
     "human_kl": ["max", "last"],
     "human_kl_var": ["max", "last"],
+    "code_kl_std": "last",
+    "human_kl_std": "last",
     "human_kl_dissim": ["max", "last"],
 }
 col_names = {
     "belief_dims_mean": "belief_dims",
     "num_humans_last": "num_humans",
+    "num_humans_mean": "num_humans",
     "num_ml_last": "num_ml",
+    "num_ml_mean": "num_ml",
     "p_1_mean": "p_1",
     "p_2_mean": "p_2",
     "p_3_mean": "p_3",
-    "p_hp_mean": "p_hp",
-    "p_hm_mean": "p_hm",
+    "p_h1_mean": "p_h1",
+    "p_h2_mean": "p_h2",
     "p_ml_mean": "p_ml",
+    "code_kl_mean": "code_kl",
+    "human_kl_mean": "human_kl",
+    "human_kl_var_mean": "human_kl_var",
+    "human_kl_dissim_mean": "human_kl_dissim",
+    "code_kl_std_last": "code_kl_std",
+    "human_kl_std_last": "human_kl_std",
 }
-time_data, agg_data = preprocess_dataset(fname, time_aggs, col_names)
+time_data, agg_data = preprocess_dataset(df, run_aggs, time_aggs, col_names)
 time_fname = f"{DATA_PATH}basic_ml_ts_{timestr}.csv"
 time_data.to_csv(time_fname)
 print(f'Saved time-series dataframe ({time_data.shape[0]} rows, {time_data.shape[1]} columns) to file {time_fname}')
