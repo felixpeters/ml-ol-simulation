@@ -26,11 +26,11 @@ def get_tracking_data(runner):
     # assemble data frame from model tracking data
     df = runner.get_model_vars_dataframe()
     hists = df.loc[:,'history']
-    res_df = pd.DataFrame()
+    res_list = []
     for hist in hists:
-        hist_df = pd.DataFrame(hist.model_vars)
-        hist_df = hist_df.drop(columns=["time"])
-        res_df = res_df.append(hist_df)
-    # reset index to created MultiIndex
+        record = hist.model_vars
+        res_list.append(record)
+    res_df = pd.concat(pd.DataFrame(l) for l in res_list)
+    res_df = res_df.drop(columns=["time"])
     res_df.index = index
     return res_df

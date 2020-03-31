@@ -26,10 +26,10 @@ fixed_params = {
 # variable parameters defining each configuration
 variable_params = {
     "num_ml": [5, 15, 30],
-    "p_1": [0.1, 0.3, 0.5, 0.7, 0.9],
-    "p_2": [0.1, 0.3, 0.5, 0.7, 0.9],
-    "p_3": [0.1, 0.3, 0.5, 0.7, 0.9],
-    "p_ml": [0.2, 0.5, 0.8, 1.0],
+    "p_1": [0.1, 0.5, 0.9],
+    "p_2": [0.1, 0.5, 0.9],
+    "p_3": [0.1, 0.5, 0.9],
+    "p_ml": [0.5, 0.8],
 }
 
 batch_run = BatchRunnerMP(
@@ -37,7 +37,7 @@ batch_run = BatchRunnerMP(
     nr_processes=CPU_COUNT,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
-    iterations=1,
+    iterations=2,
     max_steps=100,
     display_progress=True,
     model_reporters={
@@ -113,7 +113,7 @@ col_names = {
     "p_h1_mean": "p_h1",
     "p_h2_mean": "p_h2",
     "p_ml_mean": "p_ml",
-    "p_turb_mean": "p_ml",
+    "p_turb_mean": "p_turb",
     "code_kl_mean": "code_kl",
     "p_ml_scaling_last": "p_ml_scaling",
     "human_kl_mean": "human_kl",
