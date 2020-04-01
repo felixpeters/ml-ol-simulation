@@ -20,7 +20,7 @@ fixed_params = {
     "p_h1": 0.1,
     "p_h2": 0.5,
     "p_turb": 0.1,
-    "p_ml_scaling": "off",
+    "p_ml_scaling": "off", # current alternative: "coupled" (p_ml = human_kl)
 }
 
 # variable parameters defining each configuration
