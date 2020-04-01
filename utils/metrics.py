@@ -15,8 +15,13 @@ def calc_code_kl(model):
 
 def calc_human_kl(model):
     humans = model.schedule.agents[2:(2 + model.conf["num_humans"])]
-    kls = [h.kl for h in humans]
-    return np.mean(kls)
+    return np.mean([h.kl for h in humans])
+
+def calc_ds_kl(model):
+    num_hum = model.conf["num_humans"]
+    num_ds = model.conf["num_data_scientist"]
+    ds = model.schedule.agents[(2 + num_hum):(2 + num_hum + num_ds)]
+    return np.mean([d.kl for d in ds])
 
 def calc_ai_knowledge(model):
     agents = model.ai_agents()

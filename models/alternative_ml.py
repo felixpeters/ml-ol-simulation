@@ -273,6 +273,7 @@ class AlternativeMLModel(Model):
                     "p_turb": self.get_p_turb,
                     "code_kl": calc_code_kl,
                     "human_kl": calc_human_kl,
+                    "ds_kl": calc_ds_kl,
                     "human_kl_var": calc_kl_var,
                     "human_kl_dissim": calc_dissim,
                 }
