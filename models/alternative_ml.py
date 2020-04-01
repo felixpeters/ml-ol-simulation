@@ -18,15 +18,7 @@ class Reality(Agent):
         self.state = random_reality(model.conf['belief_dims'])
         self.kl = 1.0
 
-    def turbulence(self):
-        p_turb = self.model.conf["p_turb"]
-        for i in range(len(self.state)):
-            if np.random.binomial(1, p_turb):
-                self.state[i] = (-1) * self.state[i]
-        return
-
     def step(self):
-        self.turbulence()
         return
 
 class OrganizationalCode(Agent):
@@ -199,7 +191,6 @@ class AlternativeMLModel(Model):
             p_h1=0.1,
             p_h2=0.1,
             p_ml=0.5,
-            p_turb=0.1,
         ):
         # reset random seeds prior to each iteration
         np.random.seed()
@@ -207,6 +198,7 @@ class AlternativeMLModel(Model):
         # save configuration
         self.conf = {
                 "num_humans": num_humans,
+                "num_regular": num_humans - num_data_scientist,
                 "num_data_scientist": num_data_scientist,
                 "belief_dims": belief_dims,
                 "p_1": p_1,
@@ -214,7 +206,6 @@ class AlternativeMLModel(Model):
                 "p_h1": p_h1,
                 "p_h2": p_h2,
                 "p_ml": p_ml,
-                "p_turb": p_turb,
         }
         self.running = True
         self.schedule = BaseScheduler(self)
@@ -234,7 +225,6 @@ class AlternativeMLModel(Model):
     get_p_h1 = partialmethod(get_config, "p_h1") 
     get_p_h2 = partialmethod(get_config, "p_h2") 
     get_p_ml = partialmethod(get_config, "p_ml") 
-    get_p_turb = partialmethod(get_config, "p_turb") 
 
     def get_time(self, *args):
         return int(self.schedule.time)
@@ -247,7 +237,7 @@ class AlternativeMLModel(Model):
         o = OrganizationalCode("O1", self)
         self.schedule.add(o)
         # init humans
-        for i in range(self.conf["num_humans"]):
+        for i in range(self.conf["num_regular"]):
             h = Human(f"H{i+1}", self)
             self.schedule.add(h)
         # init data scientists
@@ -270,7 +260,6 @@ class AlternativeMLModel(Model):
                     "p_h1": self.get_p_h1,
                     "p_h2": self.get_p_h2,
                     "p_ml": self.get_p_ml,
-                    "p_turb": self.get_p_turb,
                     "code_kl": calc_code_kl,
                     "human_kl": calc_human_kl,
                     "ds_kl": calc_ds_kl,
@@ -286,7 +275,7 @@ class AlternativeMLModel(Model):
         # get list of humans with higher KL than code
         num_hum = self.conf["num_humans"]
         num_ds = self.conf["num_data_scientist"]
-        humans = self.schedule.agents[2:(2 + num_hum + num_ds)]
+        humans = self.schedule.agents[2:(2 + num_hum)]
         code = self.schedule.agents[1]
         return list(filter(lambda h: (h.kl > code.kl), humans))
 
