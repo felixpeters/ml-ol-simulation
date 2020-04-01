@@ -34,8 +34,8 @@ batch_run = BatchRunnerMP(
     nr_processes=CPU_COUNT,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
-    iterations=1,
-    max_steps=175,
+    iterations=2,
+    max_steps=100,
     display_progress=True,
     model_reporters={
         "history": track_model_steps, 
@@ -73,6 +73,7 @@ run_aggs = {
     "p_ml": "mean",
     "code_kl": ["mean", "std"],
     "human_kl": ["mean", "std"],
+    "ds_kl": ["mean", "std"],
     "human_kl_var": "mean",
     "human_kl_dissim": "mean",
 }
@@ -87,9 +88,11 @@ time_aggs = {
     "p_ml": "mean",
     "code_kl": ["max", "last"],
     "human_kl": ["max", "last"],
+    "ds_kl": ["max", "last"],
     "human_kl_var": ["max", "last"],
     "code_kl_std": "last",
     "human_kl_std": "last",
+    "ds_kl_std": "last",
     "human_kl_dissim": ["max", "last"],
 }
 col_names = {
@@ -105,10 +108,12 @@ col_names = {
     "p_ml_mean": "p_ml",
     "code_kl_mean": "code_kl",
     "human_kl_mean": "human_kl",
+    "ds_kl_mean": "ds_kl",
     "human_kl_var_mean": "human_kl_var",
     "human_kl_dissim_mean": "human_kl_dissim",
     "code_kl_std_last": "code_kl_std",
     "human_kl_std_last": "human_kl_std",
+    "ds_kl_std_last": "ds_kl_std",
 }
 time_data, agg_data = preprocess_dataset(df, run_aggs, time_aggs, col_names)
 time_fname = f"{DATA_PATH}alt_ml_ts_{timestr}.csv"

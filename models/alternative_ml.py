@@ -35,22 +35,11 @@ class OrganizationalCode(Agent):
 
     def learn(self):
         exp_grp = self.model.get_exp_grp()
-        ml_dims = self.model.conf["ml_dims"]
         for i in range(len(self.state)):
             exp_grp_dim = list(filter(lambda h: (h.state[i] != 0), exp_grp))
-            # if ML is present and expert group has beliefs: learn randomly
-            if (i in ml_dims) and (len(exp_grp_dim) > 0):
-                if np.random.binomial(1, 0.5):
-                    self.learn_from_ml(i)
-                else:
-                    self.learn_from_humans(i, exp_grp_dim)
-            # if expert group has no belief: always learn from ML
-            elif (i in ml_dims) and (len(exp_grp_dim) == 0):
-                self.learn_from_ml(i)
-            # if no ML is present: always learn from humans
-            elif (i not in ml_dims) and (len(exp_grp_dim) > 0):
+            # learn from expert group if it has belief for this dimension
+            if len(exp_grp_dim) > 0:
                 self.learn_from_humans(i, exp_grp_dim)
-            # if no ML is present and expert group has no belief: do nothing
         return
 
     def learn_from_humans(self, dim, exp_grp_dim):
@@ -274,7 +263,6 @@ class AlternativeMLModel(Model):
     def get_exp_grp(self):
         # get list of humans with higher KL than code
         num_hum = self.conf["num_humans"]
-        num_ds = self.conf["num_data_scientist"]
         humans = self.schedule.agents[2:(2 + num_hum)]
         code = self.schedule.agents[1]
         return list(filter(lambda h: (h.kl > code.kl), humans))

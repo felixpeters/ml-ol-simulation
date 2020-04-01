@@ -18,7 +18,7 @@ def calc_human_kl(model):
     return np.mean([h.kl for h in humans])
 
 def calc_ds_kl(model):
-    num_hum = model.conf["num_humans"]
+    num_hum = model.conf["num_regular"]
     num_ds = model.conf["num_data_scientist"]
     ds = model.schedule.agents[(2 + num_hum):(2 + num_hum + num_ds)]
     return np.mean([d.kl for d in ds])
