@@ -37,11 +37,12 @@ class OrganizationalCode(Agent):
     def learn(self):
         exp_grp = self.model.get_exp_grp()
         ml_dims = self.model.conf["ml_dims"]
+        p_org_cf = self.model.conf["p_org_cf"]
         for i in range(len(self.state)):
             exp_grp_dim = list(filter(lambda h: (h.state[i] != 0), exp_grp))
             # if ML is present and expert group has beliefs: learn randomly
             if (i in ml_dims) and (len(exp_grp_dim) > 0):
-                if np.random.binomial(1, 0.5):
+                if np.random.binomial(1, p_org_cf):
                     self.learn_from_ml(i)
                 else:
                     self.learn_from_humans(i, exp_grp_dim)
@@ -100,9 +101,10 @@ class Human(Agent):
 
     def learn(self):
         code = self.model.schedule.agents[1]
+        p_human_cf = self.model.conf["p_human_cf"]
         for dim in range(len(self.state)):
-            # learn from data or code with equal probability
-            if np.random.binomial(1, 0.5):
+            # learn from data or code with configurable probability
+            if np.random.binomial(1, p_human_cf):
                 self.learn_from_data(dim)
             else:
                 self.learn_from_code(dim)
@@ -174,7 +176,7 @@ class RobustBasicMLModel(Model):
             self,
             num_humans=50, 
             num_ml=5, 
-            num_bad_ml=5, 
+            perc_bad_ml=5, 
             belief_dims=30, 
             p_1=0.1, 
             p_2=0.9,
@@ -183,6 +185,8 @@ class RobustBasicMLModel(Model):
             p_h2=0.1,
             p_ml=0.5,
             p_ml_bad=0.2,
+            p_human_cf=0.5,
+            p_org_cf=0.5,
         ):
         # reset random seeds prior to each iteration
         np.random.seed()
@@ -191,7 +195,8 @@ class RobustBasicMLModel(Model):
         self.conf = {
                 "num_humans": num_humans,
                 "num_ml": num_ml,
-                "num_bad_ml": num_bad_ml,
+                "perc_bad_ml": perc_bad_ml,
+                "num_bad_ml": int(perc_bad_ml * num_ml),
                 "belief_dims": belief_dims,
                 "p_1": p_1,
                 "p_2": p_2,
@@ -200,6 +205,8 @@ class RobustBasicMLModel(Model):
                 "p_h2": p_h2,
                 "p_ml": p_ml,
                 "p_ml_bad": p_ml_bad,
+                "p_human_cf": p_human_cf,
+                "p_org_cf": p_org_cf,
         }
         self.running = True
         self.schedule = BaseScheduler(self)
@@ -214,6 +221,7 @@ class RobustBasicMLModel(Model):
     get_belief_dims = partialmethod(get_config, "belief_dims") 
     get_num_humans = partialmethod(get_config, "num_humans") 
     get_num_ml = partialmethod(get_config, "num_ml") 
+    get_perc_bad_ml = partialmethod(get_config, "perc_bad_ml") 
     get_num_bad_ml = partialmethod(get_config, "num_bad_ml") 
     get_p_1 = partialmethod(get_config, "p_1") 
     get_p_2 = partialmethod(get_config, "p_2") 
@@ -222,6 +230,8 @@ class RobustBasicMLModel(Model):
     get_p_h2 = partialmethod(get_config, "p_h2") 
     get_p_ml = partialmethod(get_config, "p_ml") 
     get_p_ml_bad = partialmethod(get_config, "p_ml_bad") 
+    get_p_human_cf = partialmethod(get_config, "p_human_cf")
+    get_p_org_cf = partialmethod(get_config, "p_org_cf")
 
     def get_time(self, *args):
         return int(self.schedule.time)
@@ -262,6 +272,7 @@ class RobustBasicMLModel(Model):
                     "belief_dims": self.get_belief_dims,
                     "num_humans": self.get_num_humans,
                     "num_ml": self.get_num_ml,
+                    "perc_bad_ml": self.get_perc_bad_ml,
                     "num_bad_ml": self.get_num_bad_ml,
                     "p_1": self.get_p_1,
                     "p_2": self.get_p_2,
@@ -270,6 +281,8 @@ class RobustBasicMLModel(Model):
                     "p_h2": self.get_p_h2,
                     "p_ml": self.get_p_ml,
                     "p_ml_bad": self.get_p_ml_bad,
+                    "p_human_cf": self.get_p_human_cf,
+                    "p_org_cf": self.get_p_org_cf,
                     "code_kl": calc_code_kl,
                     "human_kl": calc_human_kl,
                     "human_kl_var": calc_kl_var,

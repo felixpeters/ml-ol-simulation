@@ -21,12 +21,14 @@ fixed_params = {
     "p_h2": 0.5,
     "num_ml": 15,
     "p_ml": 0.8,
-    "p_ml_bad": 0.2
+    "p_ml_bad": 0.2,
+    "p_human_cf": 0.5, # probability to learn from data
+    "p_org_cf": 0.5, # probability to learn from MLs
 }
 
 # variable parameters defining each configuration
 variable_params = {
-    "num_bad_ml": [5, 10],
+    "perc_bad_ml": [0.2, 0.5], # percentage of ML agents with p_ml_bad
     "p_1": [0.1, 0.5, 0.9],
     "p_2": [0.1, 0.5, 0.9],
     "p_3": [0.1, 0.5, 0.9],
@@ -70,6 +72,7 @@ run_aggs = {
     "num_humans": "mean",
     "num_ml": "mean",
     "num_bad_ml": "mean",
+    "perc_bad_ml": "mean",
     "p_1": "mean",
     "p_2": "mean",
     "p_3": "mean",
@@ -77,6 +80,8 @@ run_aggs = {
     "p_h2": "mean",
     "p_ml": "mean",
     "p_ml_bad": "mean",
+    "p_human_cf": "mean",
+    "p_org_cf": "mean",
     "code_kl": ["mean", "std"],
     "human_kl": ["mean", "std"],
     "human_kl_var": "mean",
@@ -87,6 +92,7 @@ time_aggs = {
     "num_humans": "last",
     "num_ml": "last",
     "num_bad_ml": "last",
+    "perc_bad_ml": "last",
     "p_1": "mean",
     "p_2": "mean",
     "p_3": "mean",
@@ -94,6 +100,8 @@ time_aggs = {
     "p_h2": "mean",
     "p_ml": "mean",
     "p_ml_bad": "mean",
+    "p_human_cf": "mean",
+    "p_org_cf": "mean",
     "code_kl": ["max", "last"],
     "human_kl": ["max", "last"],
     "human_kl_var": ["max", "last"],
@@ -109,6 +117,8 @@ col_names = {
     "num_ml_mean": "num_ml",
     "num_bad_ml_last": "num_bad_ml",
     "num_bad_ml_mean": "num_bad_ml",
+    "perc_bad_ml_last": "perc_bad_ml",
+    "perc_bad_ml_mean": "perc_bad_ml",
     "p_1_mean": "p_1",
     "p_2_mean": "p_2",
     "p_3_mean": "p_3",
@@ -116,6 +126,8 @@ col_names = {
     "p_h2_mean": "p_h2",
     "p_ml_mean": "p_ml",
     "p_ml_bad_mean": "p_ml_bad",
+    "p_human_cf_mean": "p_human_cf",
+    "p_org_cf_mean": "p_org_cf",
     "code_kl_mean": "code_kl",
     "human_kl_mean": "human_kl",
     "human_kl_var_mean": "human_kl_var",
