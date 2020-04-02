@@ -168,7 +168,7 @@ class MLAgent(Agent):
         self.update_kl()
         return
 
-class BasicMLModel(Model):
+class RobustBasicMLModel(Model):
 
     def __init__(
             self,
@@ -248,7 +248,7 @@ class BasicMLModel(Model):
             m = MLAgent(f"ML{dim}", self, dim, self.conf["p_ml"])
             self.schedule.add(m)
         # init bad MLs
-        for i in range(num_good_ml, len(self.conf["ml_dims"]))
+        for i in range(num_good_ml, len(self.conf["ml_dims"])):
             dim = self.conf["ml_dims"][i]
             m = MLAgent(f"ML{dim}", self, dim, self.conf["p_ml_bad"])
             self.schedule.add(m)

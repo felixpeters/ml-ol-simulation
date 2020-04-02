@@ -6,7 +6,7 @@ from mesa.batchrunner import BatchRunnerMP
 from utils.runners import get_info, get_tracking_data
 from utils.metrics import *
 from utils.analysis import preprocess_dataset
-from models.basic_ml import BasicMLModel
+from models.robust_basic_ml import RobustBasicMLModel
 
 # collected data will be saved in this folder
 DATA_PATH = "data/"
@@ -33,7 +33,7 @@ variable_params = {
 }
 
 batch_run = BatchRunnerMP(
-    BasicMLModel,
+    RobustBasicMLModel,
     nr_processes=CPU_COUNT,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
@@ -107,15 +107,15 @@ col_names = {
     "num_humans_mean": "num_humans",
     "num_ml_last": "num_ml",
     "num_ml_mean": "num_ml",
-    "num_bad_ml_last": "num_ml",
-    "num_bad_ml_mean": "num_ml",
+    "num_bad_ml_last": "num_bad_ml",
+    "num_bad_ml_mean": "num_bad_ml",
     "p_1_mean": "p_1",
     "p_2_mean": "p_2",
     "p_3_mean": "p_3",
     "p_h1_mean": "p_h1",
     "p_h2_mean": "p_h2",
     "p_ml_mean": "p_ml",
-    "p_ml_bad_mean": "p_ml",
+    "p_ml_bad_mean": "p_ml_bad",
     "code_kl_mean": "code_kl",
     "human_kl_mean": "human_kl",
     "human_kl_var_mean": "human_kl_var",
