@@ -103,6 +103,7 @@ venv.bak/
 # Vim
 *.swp
 data/*
+nbs/data
 
 # mypy
 .mypy_cache/
