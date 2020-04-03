@@ -84,7 +84,7 @@ def plot_time_series(ts,
         # Save created plot to temporary file
         tmpfile = BytesIO()
         plt.savefig(tmpfile, format='png')
-        plt.show()
+        plt.close()
         # Add plot to HTML file
         encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
         html += f"<h2>Configuration: {', '.join([f'{q[0]}={q[1]}' for q in zip(query_vars, query_vals)])}</h2>"
@@ -110,7 +110,7 @@ def plot_summary(agg,
         - dep_var: Dependent variable, i.e., y-axis
         - query_vars: Variables that determine number of created plots
         - x_var: Independent variable, i.e., x-axis
-        - plot_vars: Variables that determine different lines in the plot
+        - plot_var: Variable that determines different lines in the plot
         - yticks: Scale for y-axis
         - fname: Name of created HTML file (dependent variable name will be
           added)
@@ -118,7 +118,7 @@ def plot_summary(agg,
     """
     queries = []   
     for var in query_vars:
-        queries.append(pd.unique(ts[var]))
+        queries.append(pd.unique(agg[var]))
         
     html = f"""
     <h1>Summary analysis for {dep_var}</h1>
@@ -143,7 +143,7 @@ def plot_summary(agg,
         plt.ylabel(f'avg({dep_var})')
         tmpfile = BytesIO()
         plt.savefig(tmpfile, format='png')
-        plt.show()
+        plt.close()
         encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
         html += f"<h2>Configuration: {', '.join([f'{q[0]}={q[1]}' for q in zip(query_vars, query_vals)])}</h2>"
         html += f"<img src=\'data:image/png;base64,{encoded}\'>"

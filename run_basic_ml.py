@@ -19,15 +19,15 @@ fixed_params = {
     "num_humans": 50,
     "p_h1": 0.1,
     "p_h2": 0.5,
-    "p_1": 0.5,
-    "p_2": 0.5,
 }
 
 # variable parameters defining each configuration
 variable_params = {
-    "num_ml": [5, 15],
-    "p_3": [0.1, 0.9],
-    "p_ml": [0.2, 0.8],
+    "num_ml": [5, 15, 30],
+    "p_1": [0.1, 0.5, 0.9],
+    "p_2": [0.1, 0.5, 0.9],
+    "p_3": [0.1, 0.5, 0.9],
+    "p_ml": [0.2, 0.5, 0.8],
 }
 
 batch_run = BatchRunnerMP(
@@ -124,6 +124,10 @@ print(f'Saved aggregated dataframe ({agg_data.shape[0]} rows, {agg_data.shape[1]
 
 # analyze created data
 plot_time_series(time_data.reset_index(), 'code_kl', fname=f"analysis_ts_{timestr}")
+print('Saved time series plots for code knowledge')
 plot_time_series(time_data.reset_index(), 'human_kl_var', fname=f"analysis_ts_{timestr}")
+print('Saved time series plots for knowledge variance')
 plot_time_series(time_data.reset_index(), 'human_kl_dissim', fname=f"analysis_ts_{timestr}")
-plot_summary(agg_data.reset_index(), 'code_kl', fname=f"analysis_agg_{timestr}")
+print('Saved time series plots for knowledge dissimilarity')
+plot_summary(agg_data.reset_index(), 'code_kl_last', fname=f"analysis_agg_{timestr}")
+print('Saved summary plots for code knowledge')
