@@ -5,7 +5,7 @@ from mesa.batchrunner import BatchRunnerMP
 
 from utils.runners import get_info, get_tracking_data
 from utils.metrics import *
-from utils.analysis import preprocess_dataset
+from utils.analysis import *
 from models.basic_ml import BasicMLModel
 
 # collected data will be saved in this folder
@@ -19,15 +19,15 @@ fixed_params = {
     "num_humans": 50,
     "p_h1": 0.1,
     "p_h2": 0.5,
+    "p_1": 0.5,
+    "p_2": 0.5,
 }
 
 # variable parameters defining each configuration
 variable_params = {
-    "num_ml": [5, 15, 30],
-    "p_1": [0.1, 0.3, 0.5, 0.7, 0.9],
-    "p_2": [0.1, 0.3, 0.5, 0.7, 0.9],
-    "p_3": [0.1, 0.3, 0.5, 0.7, 0.9],
-    "p_ml": [0.2, 0.5, 0.8, 1.0],
+    "num_ml": [5, 15],
+    "p_3": [0.1, 0.9],
+    "p_ml": [0.2, 0.8],
 }
 
 batch_run = BatchRunnerMP(
@@ -35,7 +35,7 @@ batch_run = BatchRunnerMP(
     nr_processes=CPU_COUNT,
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
-    iterations=1,
+    iterations=2,
     max_steps=175,
     display_progress=True,
     model_reporters={
@@ -121,3 +121,7 @@ print(f'Saved time-series dataframe ({time_data.shape[0]} rows, {time_data.shape
 agg_fname = f"{DATA_PATH}basic_ml_agg_{timestr}.csv"
 agg_data.to_csv(agg_fname)
 print(f'Saved aggregated dataframe ({agg_data.shape[0]} rows, {agg_data.shape[1]} columns) to file {agg_fname}')
+
+plot_time_series(time_data.reset_index(), 'code_kl', fname=f"analysis_{timestr}")
+plot_time_series(time_data.reset_index(), 'human_kl_var', fname=f"analysis_{timestr}")
+plot_time_series(time_data.reset_index(), 'human_kl_dissim', fname=f"analysis_{timestr}")

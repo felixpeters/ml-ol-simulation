@@ -1,4 +1,13 @@
+import base64
+from io import BytesIO
+from itertools import product
+
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams["figure.figsize"] = (15,9)
+plt.rcParams["figure.dpi"] = 100
 
 def preprocess_dataset(data, run_aggs, time_aggs, col_names):
     # round values to enable secure indexing
@@ -22,3 +31,46 @@ def preprocess_dataset(data, run_aggs, time_aggs, col_names):
     agg_data.columns = ['_'.join(col).strip() for col in agg_data.columns.values]
     agg_data.rename(columns=col_names, inplace=True)
     return time_data, agg_data
+
+def p2str(prob):
+    return str(prob).replace('.', '')
+
+def plot_time_series(ts, 
+                     dep_var='code_kl', 
+                     query_vars=['num_ml', 'p_ml', 'p_1', 'p_2'],
+                     x_var='step',
+                     plot_var='p_3',
+                     yticks=np.arange(0, 1.05, step=0.05),
+                     fname='test',
+                     save_path='data/'):
+    queries = []
+    
+    for var in query_vars:
+        queries.append(pd.unique(ts[var]))
+        
+    html = f"""
+    <h1>Time series analysis for {dep_var}</h1>
+    """
+    for query_vals in product(*queries):
+        query = ' & '.join([f'({q[0]} == {q[1]})' for q in zip(query_vars, query_vals)])
+        configs = np.unique(ts.query(query)['config'].values)
+        df = ts.loc[ts['config'].isin(configs)]
+        kls = df.groupby([plot_var, x_var]).mean()[dep_var]
+        plt.figure()
+        for p in kls.index.unique(level=0):
+            plt.plot(kls.loc[p].index, kls.loc[p], label=f"{plot_var}={p}")
+        plt.title(', '.join([f'{q[0]}={q[1]}' for q in zip(query_vars, query_vals)]))
+        plt.legend()
+        plt.xlabel(f'{x_var}')
+        plt.ylabel(f'avg({dep_var})')
+        plt.yticks(yticks)
+        plt.hlines(yticks, ts[x_var].min(), ts[x_var].max(), colors='lightgray')
+        tmpfile = BytesIO()
+        plt.savefig(tmpfile, format='png')
+        plt.show()
+        encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
+        html += f"<h2>Configuration: {', '.join([f'{q[0]}={q[1]}' for q in zip(query_vars, query_vals)])}</h2>"
+        html += f"<img src=\'data:image/png;base64,{encoded}\'>"
+    with open(f'{save_path}{fname}_{dep_var}.html','w') as f:
+        f.write(html)
+    return
