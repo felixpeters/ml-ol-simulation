@@ -122,6 +122,8 @@ agg_fname = f"{DATA_PATH}basic_ml_agg_{timestr}.csv"
 agg_data.to_csv(agg_fname)
 print(f'Saved aggregated dataframe ({agg_data.shape[0]} rows, {agg_data.shape[1]} columns) to file {agg_fname}')
 
-plot_time_series(time_data.reset_index(), 'code_kl', fname=f"analysis_{timestr}")
-plot_time_series(time_data.reset_index(), 'human_kl_var', fname=f"analysis_{timestr}")
-plot_time_series(time_data.reset_index(), 'human_kl_dissim', fname=f"analysis_{timestr}")
+# analyze created data
+plot_time_series(time_data.reset_index(), 'code_kl', fname=f"analysis_ts_{timestr}")
+plot_time_series(time_data.reset_index(), 'human_kl_var', fname=f"analysis_ts_{timestr}")
+plot_time_series(time_data.reset_index(), 'human_kl_dissim', fname=f"analysis_ts_{timestr}")
+plot_summary(agg_data.reset_index(), 'code_kl', fname=f"analysis_agg_{timestr}")
