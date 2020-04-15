@@ -1,5 +1,6 @@
 import random
 import datetime
+import math
 from collections import Counter
 from functools import partialmethod
 
@@ -160,8 +161,13 @@ class MLAgent(Agent):
         return
 
     def learn(self):
-        p_ml = self.model.conf["p_ml"]
         real_val = self.model.schedule.agents[0].state[self.state["dim"]]
+        #get p_ml depending on p_ml_scaling
+        if self.model.get_p_ml_scaling() == "logistic" or self.model.get_p_ml_scaling() == "march_like":
+            p_ml = self.model.conf["p_ml"][self.model.conf["ml_dims"].index(self.state["dim"])]
+            #prob = p_ml[self.model.conf["ml_dims"].index(self.state["dim"])]
+        else:
+            p_ml = self.model.conf["p_ml"]
         # adopt reality value with p_ml, otherwise adopt incorrect value
         if np.random.binomial(1, p_ml):
             self.state["val"] = real_val
@@ -204,6 +210,7 @@ class ExtendedMLModel(Model):
                 "p_h1": p_h1,
                 "p_h2": p_h2,
                 "p_ml": p_ml,
+                "p_ml_basic": p_ml,
                 "p_turb": p_turb,
                 "p_ml_scaling": p_ml_scaling,
         }
@@ -225,8 +232,9 @@ class ExtendedMLModel(Model):
     get_p_3 = partialmethod(get_config, "p_3") 
     get_p_h1 = partialmethod(get_config, "p_h1") 
     get_p_h2 = partialmethod(get_config, "p_h2") 
-    get_p_ml = partialmethod(get_config, "p_ml") 
-    get_p_turb = partialmethod(get_config, "p_turb") 
+    get_p_ml = partialmethod(get_config, "p_ml")
+    get_p_ml_basic = partialmethod(get_config, "p_ml_basic")
+    get_p_turb = partialmethod(get_config, "p_turb")
     get_p_ml_scaling = partialmethod(get_config, "p_ml_scaling") 
 
     def get_time(self, *args):
@@ -265,7 +273,7 @@ class ExtendedMLModel(Model):
                     "p_3": self.get_p_3,
                     "p_h1": self.get_p_h1,
                     "p_h2": self.get_p_h2,
-                    "p_ml": self.get_p_ml,
+                    "p_ml": self.get_p_ml_basic,
                     "p_turb": self.get_p_turb,
                     "p_ml_scaling": self.get_p_ml_scaling,
                     "code_kl": calc_code_kl,
@@ -295,11 +303,53 @@ class ExtendedMLModel(Model):
         return ml
 
     def scale_p_ml(self):
+        #for avg. human knowledge related manipulation
         method = self.conf["p_ml_scaling"]
         humans = self.schedule.agents[2:(2 + self.conf["num_humans"])]
         human_kl = np.mean([h.kl for h in humans])
+        #for belief related manipulation
+        exp_grp = self.get_exp_grp()
+        num_ml = self.get_num_ml()
+        ml_dims = self.conf["ml_dims"]
         if method == "coupled":
             self.conf["p_ml"] = human_kl
+        if method == "logistic" or method == "march_like":
+            p_ml = []
+            for i in range(num_ml):
+                #current dimension
+                dim = ml_dims[i]
+                #get knowledgeable group
+                exp_grp_dim = list(filter(lambda h: (h.state[dim] != 0), exp_grp))
+                #get basic parameters
+                reality = self.schedule.agents[0].state[dim]
+                p_ml_basic = self.conf["p_ml_basic"]
+
+                if len(exp_grp_dim) > 0:
+                    #if expert group exists, count correct and incorrect beliefs
+                    votes = [h.state[dim] for h in exp_grp_dim]
+                    c = Counter(votes)
+
+                    if len(c) > 1:
+                        #if expert group has correct and incorrect beliefs calculate difference
+                        k = c.get(reality)-c.get((-1)*reality)
+                    else:
+                        if votes[0] == reality:
+                            #all expert beliefs are correct
+                            k = c.get(reality)
+                        else:
+                            #all expert beliefs are incorrerect
+                            k = c.get((-1)*reality)
+                    if method == "logistic":
+                        #see Google Drive/Forschung/MISQ/ExtensionDesign for formulas
+                        alpha = 1
+                        beta = math.log((1-p_ml_basic)/p_ml_basic)
+                        p_ml.append(round(1/(1+math.e**(((-1)*k/alpha)+beta)),3))
+                    if method == "march_like":
+                        p_ml.append(1-(1-p_ml_basic)**((k/len(humans))+1))
+                else:
+                    #if there are no experts, use basic p_ml value
+                    p_ml.append(p_ml_basic)
+            self.conf["p_ml"] = p_ml
         return
 
     def step(self):
