@@ -27,7 +27,6 @@ class Reality(Agent):
         return
 
     def step(self):
-        self.turbulence()
         return
 
 class OrganizationalCode(Agent):
@@ -92,7 +91,6 @@ class OrganizationalCode(Agent):
     def step(self):
         # first learn, then update KL
         self.learn()
-        self.update_kl()
         return
 
 class Human(Agent):
@@ -141,7 +139,6 @@ class Human(Agent):
 
     def step(self):
         self.learn()
-        self.update_kl()
         return
 
 class MLAgent(Agent):
@@ -179,7 +176,6 @@ class MLAgent(Agent):
 
     def step(self):
         self.learn()
-        self.update_kl()
         return
 
 class ExtendedMLModel(Model):
@@ -316,6 +312,15 @@ class ExtendedMLModel(Model):
     def get_ml_agents(self):
         return self.schedule.agents[(2+self.conf["num_humans"]):]
 
+    def update_kls(self):
+        for h in self.get_human_agents():
+            h.update_kl()
+        for ml in self.get_ml_agents():
+            ml.update_kl()
+        code = self.get_org_code()
+        code.update_kl()
+        return
+
     def scale_p_ml(self):
         #for avg. human knowledge related manipulation
         method = self.conf["p_ml_scaling"]
@@ -367,14 +372,23 @@ class ExtendedMLModel(Model):
             self.conf["p_ml"] = p_ml
         return
 
+    def environmental_turbulence(self):
+        reality = self.get_reality()
+        reality.turbulence()
+        return
+
     def step(self):
         try:
+            # calculate knowledge levels
+            self.update_kls()
             # determine expert group for this time step
             self.exp_grp = self.get_exp_grp()
             # scale p_ml according to human KL
             self.scale_p_ml()
             # update all agents
             self.schedule.step()
+            # update reality according to turbulence
+            self.environmental_turbulence()
             # collect metrics for this time step
             self.datacollector.collect(self)
         except Exception as e:
