@@ -11,10 +11,11 @@ def track_model_steps(model):
     return model.datacollector
 
 def calc_code_kl(model):
-    return model.schedule.agents[1].kl
+    code = model.get_org_code()
+    return code.kl
 
 def calc_human_kl(model):
-    humans = model.schedule.agents[2:(2 + model.conf["num_humans"])]
+    humans = model.get_human_agents()
     return np.mean([h.kl for h in humans])
 
 def calc_ds_kl(model):
@@ -39,7 +40,7 @@ def calc_ai_knowledge(model):
 def calc_dissim(model):
     num_humans = model.conf["num_humans"]
     num_dims = model.conf["belief_dims"]
-    humans = model.schedule.agents[2:(2 + num_humans)]
+    humans = model.get_human_agents()
     beliefs = np.vstack([h.state for h in humans])
     rows, cols = np.triu_indices(num_humans, 1)
     comp_sum = np.sum(beliefs[rows] != beliefs[cols])
@@ -47,6 +48,6 @@ def calc_dissim(model):
     return coeff * comp_sum
 
 def calc_kl_var(model):
-    humans = model.schedule.agents[2:(2 + model.conf["num_humans"])]
+    humans = model.get_human_agents()
     kls = [h.kl for h in humans]
     return np.var(kls)
