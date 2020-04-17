@@ -91,6 +91,7 @@ class OrganizationalCode(Agent):
     def step(self):
         # first learn, then update KL
         self.learn()
+        self.update_kl()
         return
 
 class Human(Agent):
@@ -139,6 +140,7 @@ class Human(Agent):
 
     def step(self):
         self.learn()
+        self.update_kl()
         return
 
 class MLAgent(Agent):
@@ -176,6 +178,7 @@ class MLAgent(Agent):
 
     def step(self):
         self.learn()
+        self.update_kl()
         return
 
 class ExtendedMLModel(Model):
@@ -242,9 +245,6 @@ class ExtendedMLModel(Model):
         # init reality
         r = Reality("R1", self) 
         self.schedule.add(r)
-        # init organization
-        o = OrganizationalCode("O1", self)
-        self.schedule.add(o)
         # init humans
         for i in range(self.conf["num_humans"]):
             h = Human(f"H{i+1}", self)
@@ -256,6 +256,9 @@ class ExtendedMLModel(Model):
         for i in self.conf["ml_dims"]:
             m = MLAgent(f"ML{i+1}", self, i)
             self.schedule.add(m)
+        # init organization
+        o = OrganizationalCode("O1", self)
+        self.schedule.add(o)
         return
 
     def init_dc(self):
@@ -304,13 +307,13 @@ class ExtendedMLModel(Model):
         return self.schedule.agents[0]
 
     def get_org_code(self):
-        return self.schedule.agents[1]
+        return self.schedule.agents[-1]
 
     def get_human_agents(self):
-        return self.schedule.agents[2:(2 + self.conf["num_humans"])]
+        return self.schedule.agents[1:(1 + self.conf["num_humans"])]
 
     def get_ml_agents(self):
-        return self.schedule.agents[(2+self.conf["num_humans"]):]
+        return self.schedule.agents[(1 + self.conf["num_humans"]):-1]
 
     def update_kls(self):
         for h in self.get_human_agents():
