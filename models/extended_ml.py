@@ -39,7 +39,8 @@ class OrganizationalCode(Agent):
         self.update_kl()
 
     def update_kl(self):
-        self.kl = calc_kl(self.model.schedule.agents[0].state, self.state)
+        reality = self.model.get_reality()
+        self.kl = calc_kl(reality.state, self.state)
         return
 
     def learn(self):
@@ -103,11 +104,11 @@ class Human(Agent):
         self.update_kl()
 
     def update_kl(self):
-        self.kl = calc_kl(self.model.schedule.agents[0].state, self.state)
+        reality = self.model.get_reality()
+        self.kl = calc_kl(reality.state, self.state)
         return
 
     def learn(self):
-        code = self.model.schedule.agents[1]
         for dim in range(len(self.state)):
             # learn from data or code with equal probability
             if np.random.binomial(1, 0.5):
@@ -117,7 +118,7 @@ class Human(Agent):
         return
 
     def learn_from_data(self, dim):
-        data = self.model.schedule.agents[0]
+        data = self.model.get_reality()
         p_h1 = self.model.conf["p_h1"]
         p_h2 = self.model.conf["p_h2"]
         # learn with probability p_h1
@@ -131,7 +132,7 @@ class Human(Agent):
         return
 
     def learn_from_code(self, dim):
-        code = self.model.schedule.agents[1]
+        code = self.model.get_org_code()
         p_1 = self.model.conf["p_1"]
         # learn from code noly if code belief differs from own
         if self.state[dim] != code.state[dim] and code.state[dim] != 0:
@@ -155,13 +156,14 @@ class MLAgent(Agent):
         self.update_kl()
 
     def update_kl(self):
-        reality = self.model.schedule.agents[0].state
+        reality = self.model.get_reality()
         # KL is binary: 1 if corresponding to reality, 0 otherwise
-        self.kl = 1.0 if self.state["val"] == reality[self.state["dim"]] else 0.0
+        self.kl = 1.0 if self.state["val"] == reality.state[self.state["dim"]] else 0.0
         return
 
     def learn(self):
-        real_val = self.model.schedule.agents[0].state[self.state["dim"]]
+        real_val = self.model.get_reality()
+        real_val = reality.state[self.state["dim"]]
         #get p_ml depending on p_ml_scaling
         if self.model.get_p_ml_scaling() == "logistic" or self.model.get_p_ml_scaling() == "march_like":
             p_ml = self.model.conf["p_ml"][self.model.conf["ml_dims"].index(self.state["dim"])]
@@ -288,13 +290,13 @@ class ExtendedMLModel(Model):
 
     def get_exp_grp(self):
         # get list of humans with higher KL than code
-        humans = self.schedule.agents[2:(2 + self.conf["num_humans"])]
-        code = self.schedule.agents[1]
+        humans = self.get_human_agents()
+        code = self.get_org_code()
         return list(filter(lambda h: (h.kl > code.kl), humans))
 
     def get_ml(self, dim):
         # loop through MLs to find the one with suitable dimension
-        mls = self.schedule.agents[(2+self.conf["num_humans"]):]
+        mls = self.get_ml_agents()
         ml = None
         for m in mls:
             if m.state["dim"] == dim:
@@ -302,10 +304,22 @@ class ExtendedMLModel(Model):
                 break
         return ml
 
+    def get_reality(self):
+        return self.schedule.agents[0]
+
+    def get_org_code(self):
+        return self.schedule.agents[1]
+
+    def get_human_agents(self):
+        return self.schedule.agents[2:(2 + self.conf["num_humans"])]
+
+    def get_ml_agents(self):
+        return self.schedule.agents[(2+self.conf["num_humans"]):]
+
     def scale_p_ml(self):
         #for avg. human knowledge related manipulation
         method = self.conf["p_ml_scaling"]
-        humans = self.schedule.agents[2:(2 + self.conf["num_humans"])]
+        humans = self.get_human_agents()
         human_kl = np.mean([h.kl for h in humans])
         #for belief related manipulation
         exp_grp = self.get_exp_grp()
@@ -321,7 +335,8 @@ class ExtendedMLModel(Model):
                 #get knowledgeable group
                 exp_grp_dim = list(filter(lambda h: (h.state[dim] != 0), exp_grp))
                 #get basic parameters
-                reality = self.schedule.agents[0].state[dim]
+                reality = self.get_reality()
+                reality = reality.state[dim]
                 p_ml_basic = self.conf["p_ml_basic"]
 
                 if len(exp_grp_dim) > 0:
