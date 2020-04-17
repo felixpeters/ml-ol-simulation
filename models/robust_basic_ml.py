@@ -31,7 +31,8 @@ class OrganizationalCode(Agent):
         self.update_kl()
 
     def update_kl(self):
-        self.kl = calc_kl(self.model.schedule.agents[0].state, self.state)
+        reality = self.model.get_reality()
+        self.kl = calc_kl(reality.state, self.state)
         return
 
     def learn(self):
@@ -96,11 +97,12 @@ class Human(Agent):
         self.update_kl()
 
     def update_kl(self):
-        self.kl = calc_kl(self.model.schedule.agents[0].state, self.state)
+        reality = self.model.get_reality()
+        self.kl = calc_kl(reality.state, self.state)
         return
 
     def learn(self):
-        code = self.model.schedule.agents[1]
+        code = self.model.get_org_code()
         p_human_cf = self.model.conf["p_human_cf"]
         for dim in range(len(self.state)):
             # learn from data or code with configurable probability
@@ -111,7 +113,7 @@ class Human(Agent):
         return
 
     def learn_from_data(self, dim):
-        data = self.model.schedule.agents[0]
+        data = self.model.get_reality()
         p_h1 = self.model.conf["p_h1"]
         p_h2 = self.model.conf["p_h2"]
         # learn with probability p_h1
@@ -125,7 +127,7 @@ class Human(Agent):
         return
 
     def learn_from_code(self, dim):
-        code = self.model.schedule.agents[1]
+        code = self.model.get_org_code()
         p_1 = self.model.conf["p_1"]
         # learn from code noly if code belief differs from own
         if self.state[dim] != code.state[dim] and code.state[dim] != 0:
@@ -150,14 +152,15 @@ class MLAgent(Agent):
         self.update_kl()
 
     def update_kl(self):
-        reality = self.model.schedule.agents[0].state
+        reality = self.model.get_reality()
         # KL is binary: 1 if corresponding to reality, 0 otherwise
-        self.kl = 1.0 if self.state["val"] == reality[self.state["dim"]] else 0.0
+        self.kl = 1.0 if self.state["val"] == reality.state[self.state["dim"]] else 0.0
         return
 
     def learn(self):
         p_ml = self.p_ml
-        real_val = self.model.schedule.agents[0].state[self.state["dim"]]
+        reality = self.model.get_reality()
+        real_val = reality.state[self.state["dim"]]
         # adopt reality value with p_ml, otherwise adopt incorrect value
         if np.random.binomial(1, p_ml):
             self.state["val"] = real_val
@@ -293,15 +296,27 @@ class RobustBasicMLModel(Model):
         self.datacollector.collect(self)
         return
 
+    def get_reality(self):
+        return self.schedule.agents[0]
+
+    def get_org_code(self):
+        return self.schedule.agents[1]
+
+    def get_human_agents(self):
+        return self.schedule.agents[2:(2 + self.conf["num_humans"])]
+
+    def get_ml_agents(self):
+        return self.schedule.agents[(2 + self.conf["num_humans"]):]
+
     def get_exp_grp(self):
         # get list of humans with higher KL than code
-        humans = self.schedule.agents[2:(2 + self.conf["num_humans"])]
-        code = self.schedule.agents[1]
+        humans = self.get_human_agents()
+        code = self.get_org_code()
         return list(filter(lambda h: (h.kl > code.kl), humans))
 
     def get_ml(self, dim):
         # loop through MLs to find the one with suitable dimension
-        mls = self.schedule.agents[(2+self.conf["num_humans"]):]
+        mls = self.get_ml_agents()
         ml = None
         for m in mls:
             if m.state["dim"] == dim:
