@@ -161,7 +161,7 @@ class MLAgent(Agent):
         return
 
     def learn(self):
-        real_val = self.model.get_reality()
+        reality = self.model.get_reality()
         real_val = reality.state[self.state["dim"]]
         #get p_ml depending on p_ml_scaling
         if self.model.get_p_ml_scaling() == "logistic" or self.model.get_p_ml_scaling() == "march_like":
