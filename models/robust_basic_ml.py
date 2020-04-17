@@ -243,9 +243,6 @@ class RobustBasicMLModel(Model):
         # init reality
         r = Reality("R1", self) 
         self.schedule.add(r)
-        # init organization
-        o = OrganizationalCode("O1", self)
-        self.schedule.add(o)
         # init humans
         for i in range(self.conf["num_humans"]):
             h = Human(f"H{i+1}", self)
@@ -265,6 +262,9 @@ class RobustBasicMLModel(Model):
             dim = self.conf["ml_dims"][i]
             m = MLAgent(f"ML{dim}", self, dim, self.conf["p_ml_bad"])
             self.schedule.add(m)
+        # init organization
+        o = OrganizationalCode("O1", self)
+        self.schedule.add(o)
         return
 
     def init_dc(self):
@@ -300,13 +300,13 @@ class RobustBasicMLModel(Model):
         return self.schedule.agents[0]
 
     def get_org_code(self):
-        return self.schedule.agents[1]
+        return self.schedule.agents[-1]
 
     def get_human_agents(self):
-        return self.schedule.agents[2:(2 + self.conf["num_humans"])]
+        return self.schedule.agents[1:(1 + self.conf["num_humans"])]
 
     def get_ml_agents(self):
-        return self.schedule.agents[(2 + self.conf["num_humans"]):]
+        return self.schedule.agents[(1 + self.conf["num_humans"]):-1]
 
     def get_exp_grp(self):
         # get list of humans with higher KL than code
