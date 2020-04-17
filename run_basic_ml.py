@@ -23,11 +23,11 @@ fixed_params = {
 
 # variable parameters defining each configuration
 variable_params = {
-    "num_ml": [5, 15, 30],
-    "p_1": [0.1, 0.5, 0.9],
-    "p_2": [0.1, 0.5, 0.9],
-    "p_3": [0.1, 0.5, 0.9],
-    "p_ml": [0.2, 0.5, 0.8],
+    "num_ml": [5, 15],
+    "p_1": [0.1, 0.9],
+    "p_2": [0.1, 0.9],
+    "p_3": [0.1, 0.9],
+    "p_ml": [0.2, 0.8],
 }
 
 batch_run = BatchRunnerMP(
