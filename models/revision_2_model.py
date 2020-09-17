@@ -193,6 +193,7 @@ class Revision2Model(Model):
             q_h1=0.1,
             q_h2=0.1,
             q_ml=0.5,
+            alpha_ml=10,
             p_turb=0.1,
             q_ml_scaling="off",
         ):
@@ -211,6 +212,7 @@ class Revision2Model(Model):
                 "q_h2": q_h2,
                 "q_ml": q_ml,
                 "q_ml_basic": q_ml,
+                "alpha_ml": alpha_ml,
                 "p_turb": p_turb,
                 "q_ml_scaling": q_ml_scaling,
         }
@@ -234,6 +236,7 @@ class Revision2Model(Model):
     get_q_h2 = partialmethod(get_config, "q_h2") 
     get_q_ml = partialmethod(get_config, "q_ml")
     get_q_ml_basic = partialmethod(get_config, "q_ml_basic")
+    get_alpha_ml = partialmethod(get_config, "alpha_ml")
     get_p_turb = partialmethod(get_config, "p_turb")
     get_q_ml_scaling = partialmethod(get_config, "q_ml_scaling") 
 
@@ -274,6 +277,7 @@ class Revision2Model(Model):
                     "q_h1": self.get_q_h1,
                     "q_h2": self.get_q_h2,
                     "q_ml": self.get_q_ml_basic,
+                    "alpha_ml": self.get_alpha_ml,
                     "p_turb": self.get_p_turb,
                     "q_ml_scaling": self.get_q_ml_scaling,
                     "code_kl": calc_code_kl,
@@ -360,7 +364,7 @@ class Revision2Model(Model):
                             #all expert beliefs are incorrerect
                             k = c.get((-1)*reality)
                     #see Google Drive/Forschung/MISQ/ExtensionDesign for formulas
-                    alpha = 1
+                    alpha = self.conf["alpha_ml"]
                     beta = math.log((1-q_ml_basic)/q_ml_basic)
                     q_ml.append(round(1/(1+math.e**(((-1)*k/alpha)+beta)),3))
                 else:
