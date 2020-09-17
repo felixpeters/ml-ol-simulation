@@ -132,6 +132,7 @@ class Human(Agent):
         self.kl = calc_kl(reality.state, self.state)
         return
 
+    # TODO: speed up learning loop
     def learn(self):
         for dim in range(len(self.state)):
             # learn from data or code with equal probability
@@ -354,6 +355,8 @@ class Revision2Model(Model):
         return self.schedule.agents[(2 + self.conf["n"]):-1]
 
     def update_kls(self):
+        data = self.get_data()
+        data.update_kl()
         for h in self.get_human_agents():
             h.update_kl()
         for ml in self.get_ml_agents():
