@@ -6,35 +6,14 @@ from mesa.batchrunner import BatchRunnerMP
 from utils.runners import get_info, get_tracking_data
 from utils.metrics import *
 from utils.analysis import preprocess_dataset
+from utils.params import fixed_params, test_params, full_params
 from models.revision_2_model import Revision2Model
 
 # collected data will be saved in this folder
 DATA_PATH = "data/"
 # get the number of available CPUs for multi-processing
 CPU_COUNT = os.cpu_count() or 2
-
-# fixed parameters
-fixed_params = {
-    "m": 30,
-    "n": 60,
-    "j": 15,
-    "q_h1": 0.1,
-    "q_h2": 0.5,
-    "q_ml_scaling": "on",
-    "q_d_scaling": "on",
-}
-
-# variable parameters defining each configuration
-variable_params = {
-    "p_1": [0.1, 0.9],# [0.1, 0.3, 0.5, 0.7, 0.9],
-    "p_2": [0.1, 0.9],# [0.1, 0.3, 0.5, 0.7, 0.9],
-    "p_3": [0.1, 0.9],# [0.1, 0.3, 0.5, 0.7, 0.9],
-    "q_ml": [0.5, 0.9],# [0.4, 0.7, 0.9],
-    "q_d": [0.5, 0.9],# [0.4, 0.7, 0.9],
-    "alpha_d": [5, 10],# [5, 10, 50],
-    "alpha_ml": [5, 10],# [5, 10, 50],
-    "p_turb": [0, 0.1],# [0, 0.02, 0.1, 0.2]
-}
+variable_params = test_params
 
 batch_run = BatchRunnerMP(
     Revision2Model,
@@ -42,7 +21,7 @@ batch_run = BatchRunnerMP(
     variable_parameters=variable_params,
     fixed_parameters=fixed_params,
     iterations=1,
-    max_steps=50,
+    max_steps=100,
     display_progress=True,
     model_reporters={
         "history": track_model_steps, 
