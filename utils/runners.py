@@ -8,8 +8,8 @@ import pandas as pd
 from mesa.time import BaseScheduler
 from mesa.batchrunner import BatchRunner
 
-def get_info(runner):
-    num_configs = reduce(lambda prod, params: prod * len(params), runner.variable_parameters.values(), 1)
+def get_info(runner, variable_params):
+    num_configs = reduce(lambda prod, params: prod * len(params), variable_params.values(), 1)
     num_runs = runner.iterations
     return (num_configs * num_runs, num_configs, num_runs)
 

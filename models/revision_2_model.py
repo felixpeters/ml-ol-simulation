@@ -272,6 +272,7 @@ class Revision2Model(Model):
     get_q_d = partialmethod(get_config, "q_d") 
     get_q_ml = partialmethod(get_config, "q_ml")
     get_q_ml_basic = partialmethod(get_config, "q_ml_basic")
+    get_q_d_basic = partialmethod(get_config, "q_d_basic")
     get_alpha_ml = partialmethod(get_config, "alpha_ml")
     get_alpha_d = partialmethod(get_config, "alpha_d")
     get_p_turb = partialmethod(get_config, "p_turb")
@@ -316,7 +317,7 @@ class Revision2Model(Model):
                     "p_3": self.get_p_3,
                     "q_h1": self.get_q_h1,
                     "q_h2": self.get_q_h2,
-                    "q_d": self.get_q_d,
+                    "q_d": self.get_q_d_basic,
                     "q_ml": self.get_q_ml_basic,
                     "alpha_ml": self.get_alpha_ml,
                     "alpha_d": self.get_alpha_d,
@@ -429,12 +430,9 @@ class Revision2Model(Model):
             human_kl = np.mean([h.kl for h in humans])
             #for belief related manipulation
             exp_grp = self.get_exp_grp()
-            j = self.get_j()
-            ml_dims = self.conf["ml_dims"]
+            m = self.get_m()
             q_d = []
-            for i in range(j):
-                #current dimension
-                dim = ml_dims[i]
+            for dim in range(m):
                 #get knowledgeable group
                 exp_grp_dim = list(filter(lambda h: (h.state[dim] != 0), exp_grp))
                 #get basic parameters

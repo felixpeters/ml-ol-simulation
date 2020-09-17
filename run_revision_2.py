@@ -26,14 +26,14 @@ fixed_params = {
 
 # variable parameters defining each configuration
 variable_params = {
-    "p_1": [0.1, 0.3, 0.5, 0.7, 0.9],
-    "p_2": [0.1, 0.3, 0.5, 0.7, 0.9],
-    "p_3": [0.1, 0.3, 0.5, 0.7, 0.9],
-    "q_ml": [0.4, 0.7, 0.9],
-    "q_d": [0.4, 0.7, 0.9],
-    "alpha_d": [5, 10, 50],
-    "alpha_ml": [5, 10, 50],
-    "p_turb": [0, 0.02, 0.1, 0.2]
+    "p_1": [0.1, 0.9],# [0.1, 0.3, 0.5, 0.7, 0.9],
+    "p_2": [0.1, 0.9],# [0.1, 0.3, 0.5, 0.7, 0.9],
+    "p_3": [0.1, 0.9],# [0.1, 0.3, 0.5, 0.7, 0.9],
+    "q_ml": [0.5, 0.9],# [0.4, 0.7, 0.9],
+    "q_d": [0.5, 0.9],# [0.4, 0.7, 0.9],
+    "alpha_d": [5, 10],# [5, 10, 50],
+    "alpha_ml": [5, 10],# [5, 10, 50],
+    "p_turb": [0, 0.1],# [0, 0.02, 0.1, 0.2]
 }
 
 batch_run = BatchRunnerMP(
@@ -50,7 +50,7 @@ batch_run = BatchRunnerMP(
 )
 
 # simulation batch run
-total_iter, num_conf, num_iter = get_info(batch_run)
+total_iter, num_conf, num_iter = get_info(batch_run, variable_params)
 print(f'Starting simulation with the following setup:')
 print(f'- Total number of iterations: {total_iter}')
 print(f'- Number of configurations: {num_conf}')
@@ -103,7 +103,7 @@ time_aggs = {
     "q_ml": "mean",
     "q_d": "mean",
     "alpha_d": "mean",
-    "alpha_ml": "mean"
+    "alpha_ml": "mean",
     "p_turb": "mean",
     "q_ml_scaling": "last",
     "q_d_scaling": "last",
@@ -116,11 +116,11 @@ time_aggs = {
     "data_qual": ["max", "last"],
 }
 col_names = {
-    "m_mean": "belief_dims",
-    "n_last": "num_humans",
-    "n_mean": "num_humans",
-    "j_last": "num_ml",
-    "j_mean": "num_ml",
+    "m_mean": "m",
+    "n_last": "n",
+    "n_mean": "n",
+    "j_last": "j",
+    "j_mean": "j",
     "p_1_mean": "p_1",
     "p_2_mean": "p_2",
     "p_3_mean": "p_3",
@@ -139,7 +139,7 @@ col_names = {
     "human_kl_dissim_mean": "human_kl_dissim",
     "code_kl_std_last": "code_kl_std",
     "human_kl_std_last": "human_kl_std",
-    "data_qual_last": "data_qual",
+    "data_qual_mean": "data_qual",
 }
 time_data, agg_data = preprocess_dataset(df, run_aggs, time_aggs, col_names)
 time_fname = f"{DATA_PATH}r2_ts_{timestr}.csv"
