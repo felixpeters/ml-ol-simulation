@@ -94,6 +94,34 @@ class OrganizationalCode(Agent):
         self.update_kl()
         return
 
+class Data(Agent):
+
+    def __init__(self, unique_id, model):
+        super().__init__(unique_id, model)
+        self.state = random_reality(model.conf['m'])
+        self.update_kl()
+
+    def update_kl(self):
+        reality = self.model.get_reality()
+        self.kl = calc_kl(reality.state, self.state)
+        return
+
+    def learn(self):
+        q_d = self.model.conf["q_d"]
+        reality = self.model.get_reality()
+        probs = np.random.binomial(1, q_d, self.model.conf['m'])
+        for dim in range(len(self.state)):
+            if probs[dim]:
+                self.state[dim] = reality.state[dim]
+            else:
+                self.state[dim] = (-1) * reality.state[dim]
+        return
+
+    def step(self):
+        self.learn()
+        self.update_kl()
+        return
+
 class Human(Agent):
 
     def __init__(self, unique_id, model):
@@ -192,6 +220,7 @@ class Revision2Model(Model):
             p_3=0.9,
             q_h1=0.1,
             q_h2=0.1,
+            q_d=0.7,
             q_ml=0.5,
             alpha_ml=10,
             p_turb=0.1,
@@ -210,6 +239,7 @@ class Revision2Model(Model):
                 "p_3": p_3,
                 "q_h1": q_h1,
                 "q_h2": q_h2,
+                "q_d": q_d,
                 "q_ml": q_ml,
                 "q_ml_basic": q_ml,
                 "alpha_ml": alpha_ml,
@@ -234,6 +264,7 @@ class Revision2Model(Model):
     get_p_3 = partialmethod(get_config, "p_3") 
     get_q_h1 = partialmethod(get_config, "q_h1") 
     get_q_h2 = partialmethod(get_config, "q_h2") 
+    get_q_d = partialmethod(get_config, "q_d") 
     get_q_ml = partialmethod(get_config, "q_ml")
     get_q_ml_basic = partialmethod(get_config, "q_ml_basic")
     get_alpha_ml = partialmethod(get_config, "alpha_ml")
@@ -247,6 +278,8 @@ class Revision2Model(Model):
         # init reality
         r = Reality("R1", self) 
         self.schedule.add(r)
+        d = Data("D1", self)
+        self.schedule.add(d)
         # init humans
         for i in range(self.conf["n"]):
             h = Human(f"H{i+1}", self)
@@ -276,6 +309,7 @@ class Revision2Model(Model):
                     "p_3": self.get_p_3,
                     "q_h1": self.get_q_h1,
                     "q_h2": self.get_q_h2,
+                    "q_d": self.get_q_d,
                     "q_ml": self.get_q_ml_basic,
                     "alpha_ml": self.get_alpha_ml,
                     "p_turb": self.get_p_turb,
@@ -309,14 +343,17 @@ class Revision2Model(Model):
     def get_reality(self):
         return self.schedule.agents[0]
 
+    def get_data(self):
+        return self.schedule.agents[1]
+
     def get_org_code(self):
         return self.schedule.agents[-1]
 
     def get_human_agents(self):
-        return self.schedule.agents[1:(1 + self.conf["n"])]
+        return self.schedule.agents[2:(2 + self.conf["n"])]
 
     def get_ml_agents(self):
-        return self.schedule.agents[(1 + self.conf["n"]):-1]
+        return self.schedule.agents[(2 + self.conf["n"]):-1]
 
     def update_kls(self):
         for h in self.get_human_agents():
@@ -344,8 +381,7 @@ class Revision2Model(Model):
                 #get knowledgeable group
                 exp_grp_dim = list(filter(lambda h: (h.state[dim] != 0), exp_grp))
                 #get basic parameters
-                reality = self.get_reality()
-                reality = reality.state[dim]
+                reality = self.get_reality().state[dim]
                 q_ml_basic = self.conf["q_ml_basic"]
 
                 if len(exp_grp_dim) > 0:
