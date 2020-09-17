@@ -221,8 +221,10 @@ class Revision2Model(Model):
             q_d=0.7,
             q_ml=0.5,
             alpha_ml=10,
+            alpha_d=10,
             p_turb=0.1,
             q_ml_scaling="off",
+            q_d_scaling="off",
         ):
         # reset random seeds prior to each iteration
         np.random.seed()
@@ -238,11 +240,14 @@ class Revision2Model(Model):
                 "q_h1": q_h1,
                 "q_h2": q_h2,
                 "q_d": q_d,
+                "q_d_basic": q_d,
                 "q_ml": q_ml,
                 "q_ml_basic": q_ml,
                 "alpha_ml": alpha_ml,
+                "alpha_d": alpha_ml,
                 "p_turb": p_turb,
                 "q_ml_scaling": q_ml_scaling,
+                "q_d_scaling": q_ml_scaling,
         }
         self.running = True
         self.schedule = BaseScheduler(self)
@@ -266,8 +271,10 @@ class Revision2Model(Model):
     get_q_ml = partialmethod(get_config, "q_ml")
     get_q_ml_basic = partialmethod(get_config, "q_ml_basic")
     get_alpha_ml = partialmethod(get_config, "alpha_ml")
+    get_alpha_d = partialmethod(get_config, "alpha_d")
     get_p_turb = partialmethod(get_config, "p_turb")
     get_q_ml_scaling = partialmethod(get_config, "q_ml_scaling") 
+    get_q_d_scaling = partialmethod(get_config, "q_d_scaling") 
 
     def get_time(self, *args):
         return int(self.schedule.time)
@@ -310,8 +317,10 @@ class Revision2Model(Model):
                     "q_d": self.get_q_d,
                     "q_ml": self.get_q_ml_basic,
                     "alpha_ml": self.get_alpha_ml,
+                    "alpha_d": self.get_alpha_d,
                     "p_turb": self.get_p_turb,
                     "q_ml_scaling": self.get_q_ml_scaling,
+                    "q_d_scaling": self.get_q_d_scaling,
                     "code_kl": calc_code_kl,
                     "human_kl": calc_human_kl,
                     "human_kl_var": calc_kl_var,
@@ -368,13 +377,13 @@ class Revision2Model(Model):
     def scale_q_ml(self):
         #for avg. human knowledge related manipulation
         scaling = self.conf["q_ml_scaling"]
-        humans = self.get_human_agents()
-        human_kl = np.mean([h.kl for h in humans])
-        #for belief related manipulation
-        exp_grp = self.get_exp_grp()
-        j = self.get_j()
-        ml_dims = self.conf["ml_dims"]
         if scaling == "on":
+            humans = self.get_human_agents()
+            human_kl = np.mean([h.kl for h in humans])
+            #for belief related manipulation
+            exp_grp = self.get_exp_grp()
+            j = self.get_j()
+            ml_dims = self.conf["ml_dims"]
             q_ml = []
             for i in range(j):
                 #current dimension
@@ -410,6 +419,51 @@ class Revision2Model(Model):
             self.conf["q_ml"] = q_ml
         return
 
+    def scale_q_d(self):
+        #for avg. human knowledge related manipulation
+        scaling = self.conf["q_d_scaling"]
+        if scaling == "on":
+            humans = self.get_human_agents()
+            human_kl = np.mean([h.kl for h in humans])
+            #for belief related manipulation
+            exp_grp = self.get_exp_grp()
+            j = self.get_j()
+            ml_dims = self.conf["ml_dims"]
+            q_d = []
+            for i in range(j):
+                #current dimension
+                dim = ml_dims[i]
+                #get knowledgeable group
+                exp_grp_dim = list(filter(lambda h: (h.state[dim] != 0), exp_grp))
+                #get basic parameters
+                reality = self.get_reality().state[dim]
+                q_d_basic = self.conf["q_d_basic"]
+
+                if len(exp_grp_dim) > 0:
+                    #if expert group exists, count correct and incorrect beliefs
+                    votes = [h.state[dim] for h in exp_grp_dim]
+                    c = Counter(votes)
+
+                    if len(c) > 1:
+                        #if expert group has correct and incorrect beliefs calculate difference
+                        k = c.get(reality)-c.get((-1)*reality)
+                    else:
+                        if votes[0] == reality:
+                            #all expert beliefs are correct
+                            k = c.get(reality)
+                        else:
+                            #all expert beliefs are incorrerect
+                            k = c.get((-1)*reality)
+                    #see Google Drive/Forschung/MISQ/ExtensionDesign for formulas
+                    alpha = self.conf["alpha_d"]
+                    beta = math.log((1-q_d_basic)/q_d_basic)
+                    q_d.append(round(1/(1+math.e**(((-1)*k/alpha)+beta)),3))
+                else:
+                    #if there are no experts, use basic q_ml value
+                    q_d.append(q_d_basic)
+            self.conf["q_d"] = q_d
+        return
+
     def environmental_turbulence(self):
         reality = self.get_reality()
         reality.turbulence()
@@ -421,6 +475,8 @@ class Revision2Model(Model):
             self.update_kls()
             # determine expert group for this time step
             self.exp_grp = self.get_exp_grp()
+            # scale q_d according to human KL
+            self.scale_q_d()
             # scale q_ml according to human KL
             self.scale_q_ml()
             # update all agents
