@@ -41,6 +41,7 @@ class OrganizationalCode(Agent):
         self.kl = calc_kl(reality.state, self.state)
         return
 
+    # TODO: speed up learning loop
     def learn(self):
         exp_grp = self.model.get_exp_grp()
         ml_dims = self.model.conf["ml_dims"]
@@ -61,6 +62,7 @@ class OrganizationalCode(Agent):
             # if no ML is present and expert group has no belief: do nothing
         return
 
+    # TODO: speed up learning loop
     def learn_from_humans(self, dim, exp_grp_dim):
         p_2 = self.model.conf["p_2"]
         if len(exp_grp_dim) > 0:
@@ -109,11 +111,7 @@ class Data(Agent):
         q_d = self.model.conf["q_d"]
         reality = self.model.get_reality()
         probs = np.random.binomial(1, q_d, self.model.conf['m'])
-        for dim in range(len(self.state)):
-            if probs[dim]:
-                self.state[dim] = reality.state[dim]
-            else:
-                self.state[dim] = (-1) * reality.state[dim]
+        self.state = [r if p==1 else (-1)*r for (r,p) in zip(reality.state, probs)]
         return
 
     def step(self):
