@@ -110,6 +110,7 @@ class Data(Agent):
     def learn(self):
         q_d = self.model.conf["q_d"]
         reality = self.model.get_reality()
+        # note: q_d will be scalar if scaling is off, vector if scaling is on
         probs = np.random.binomial(1, q_d, self.model.conf['m'])
         self.state = [r if p==1 else (-1)*r for (r,p) in zip(reality.state, probs)]
         return
