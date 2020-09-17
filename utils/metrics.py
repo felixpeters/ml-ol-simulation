@@ -51,3 +51,7 @@ def calc_kl_var(model):
     humans = model.get_human_agents()
     kls = [h.kl for h in humans]
     return np.var(kls)
+
+def calc_data_qual(model):
+    data = model.get_data()
+    return data.kl

@@ -189,8 +189,8 @@ class MLAgent(Agent):
         return
 
     def learn(self):
-        reality = self.model.get_reality()
-        real_val = reality.state[self.state["dim"]]
+        data = self.model.get_data()
+        data_val = data.state[self.state["dim"]]
         #get q_ml depending on q_ml_scaling
         if self.model.get_q_ml_scaling() == "on":
             q_ml = self.model.conf["q_ml"][self.model.conf["ml_dims"].index(self.state["dim"])]
@@ -198,9 +198,9 @@ class MLAgent(Agent):
             q_ml = self.model.conf["q_ml"]
         # adopt reality value with q_ml, otherwise adopt incorrect value
         if np.random.binomial(1, q_ml):
-            self.state["val"] = real_val
+            self.state["val"] = data_val
         else:
-            self.state["val"] = (-1) * real_val
+            self.state["val"] = (-1) * data_val
         return
 
     def step(self):
@@ -318,6 +318,7 @@ class Revision2Model(Model):
                     "human_kl": calc_human_kl,
                     "human_kl_var": calc_kl_var,
                     "human_kl_dissim": calc_dissim,
+                    "data_qual": calc_data_qual,
                 }
         )
         # collect metrics for time step 0
