@@ -21,9 +21,8 @@ class Reality(Agent):
 
     def turbulence(self):
         p_turb = self.model.conf["p_turb"]
-        for i in range(len(self.state)):
-            if np.random.binomial(1, p_turb):
-                self.state[i] = (-1) * self.state[i]
+        probs = np.random.binomial(1, p_turb, len(self.state))
+        self.state = [(-1)*s if p==1 else s for (s, p) in zip(self.state, probs)]
         return
 
     def step(self):
