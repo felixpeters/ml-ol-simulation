@@ -9,26 +9,27 @@ from utils.analysis import preprocess_dataset
 from utils.params import fixed_params, test_params, full_params
 from models.revision_2_model import Revision2Model
 
-# collected data will be saved in this folder
-DATA_PATH = "data/"
-# get the number of available CPUs for multi-processing
-CPU_COUNT = os.cpu_count() or 2
-variable_params = test_params
-
-batch_run = BatchRunnerMP(
-    Revision2Model,
-    nr_processes=CPU_COUNT,
-    variable_parameters=variable_params,
-    fixed_parameters=fixed_params,
-    iterations=1, # =80 for production
-    max_steps=100, # =200 for production
-    display_progress=True,
-    model_reporters={
-        "history": track_model_steps, 
-    },
-)
-
 if __name__ == '__main__':
+
+    # collected data will be saved in this folder
+    DATA_PATH = "data/"
+    # get the number of available CPUs for multi-processing
+    CPU_COUNT = os.cpu_count() or 2
+    variable_params = test_params
+    
+    batch_run = BatchRunnerMP(
+        Revision2Model,
+        nr_processes=CPU_COUNT,
+        variable_parameters=variable_params,
+        fixed_parameters=fixed_params,
+        iterations=1, # =80 for production
+        max_steps=100, # =200 for production
+        display_progress=True,
+        model_reporters={
+            "history": track_model_steps, 
+        },
+    )
+    
 
     # simulation batch run
     total_iter, num_conf, num_iter = get_info(batch_run, variable_params)
@@ -66,6 +67,8 @@ if __name__ == '__main__':
         "p_turb": "mean",
         "q_ml_scaling": "last",
         "q_d_scaling": "last",
+        "avg_q_d": "mean",
+        "avg_q_ml": "mean",
         "code_kl": ["mean", "std"],
         "human_kl": ["mean", "std"],
         "human_kl_var": "mean",
@@ -88,6 +91,8 @@ if __name__ == '__main__':
         "p_turb": "mean",
         "q_ml_scaling": "last",
         "q_d_scaling": "last",
+        "avg_q_d": ["max", "last"],
+        "avg_q_ml": ["max", "last"],
         "code_kl": ["max", "last"],
         "human_kl": ["max", "last"],
         "human_kl_var": ["max", "last"],
@@ -112,6 +117,8 @@ if __name__ == '__main__':
         "alpha_d_mean": "alpha_d",
         "alpha_ml_mean": "alpha_ml",
         "p_turb_mean": "p_turb",
+        "avg_q_d_mean": "avg_q_d",
+        "avg_q_ml_mean": "avg_q_ml",
         "code_kl_mean": "code_kl",
         "q_ml_scaling_last": "q_ml_scaling",
         "q_d_scaling_last": "q_d_scaling",

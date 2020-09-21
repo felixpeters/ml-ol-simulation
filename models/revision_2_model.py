@@ -323,6 +323,8 @@ class Revision2Model(Model):
                     "p_turb": self.get_p_turb,
                     "q_ml_scaling": self.get_q_ml_scaling,
                     "q_d_scaling": self.get_q_d_scaling,
+                    "avg_q_d": calc_avg_q_d,
+                    "avg_q_ml": calc_avg_q_ml,
                     "code_kl": calc_code_kl,
                     "human_kl": calc_human_kl,
                     "human_kl_var": calc_kl_var,
