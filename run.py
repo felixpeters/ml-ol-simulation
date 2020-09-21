@@ -6,7 +6,7 @@ from mesa.batchrunner import BatchRunnerMP
 from utils.runners import get_info, get_tracking_data
 from utils.metrics import *
 from utils.analysis import preprocess_dataset
-from utils.params import fixed_params, test_params, full_params
+from utils.params import test_config, run_config
 from models.revision_2_model import Revision2Model
 
 if __name__ == '__main__':
@@ -15,15 +15,15 @@ if __name__ == '__main__':
     DATA_PATH = "data/"
     # get the number of available CPUs for multi-processing
     CPU_COUNT = os.cpu_count() or 2
-    variable_params = test_params
+    config = test_config
     
     batch_run = BatchRunnerMP(
         Revision2Model,
         nr_processes=CPU_COUNT,
-        variable_parameters=variable_params,
-        fixed_parameters=fixed_params,
-        iterations=1, # =80 for production
-        max_steps=100, # =200 for production
+        variable_parameters=config["variable_params"],
+        fixed_parameters=config["fixed_params"],
+        iterations=config["num_iterations"], 
+        max_steps=config["num_steps"], 
         display_progress=True,
         model_reporters={
             "history": track_model_steps, 
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     
 
     # simulation batch run
-    total_iter, num_conf, num_iter = get_info(batch_run, variable_params)
+    total_iter, num_conf, num_iter = get_info(batch_run, config["variable_params"])
     print(f'Starting simulation with the following setup:')
     print(f'- Total number of iterations: {total_iter}')
     print(f'- Number of configurations: {num_conf}')
