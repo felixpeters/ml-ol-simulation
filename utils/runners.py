@@ -34,3 +34,6 @@ def get_tracking_data(runner):
     res_df = res_df.drop(columns=["time"])
     res_df.index = index
     return res_df
+
+def track_model_steps(model):
+    return model.datacollector

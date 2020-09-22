@@ -3,8 +3,7 @@ import os
 
 from mesa.batchrunner import BatchRunnerMP
 
-from utils.runners import get_info, get_tracking_data
-from models.utils.metrics import *
+from utils.runners import get_info, get_tracking_data, track_model_steps
 from utils.analysis import preprocess_dataset
 from utils.params import test_config, run_config
 from models.revision_2_model import Revision2Model
@@ -75,7 +74,6 @@ if __name__ == '__main__':
         "human_kl": ["mean", "std"],
         "human_kl_var": "mean",
         "human_kl_dissim": "mean",
-        "data_qual": "mean",
     }
     time_aggs = {
         "m": "mean",
@@ -101,7 +99,6 @@ if __name__ == '__main__':
         "code_kl_std": "last",
         "human_kl_std": "last",
         "human_kl_dissim": ["max", "last"],
-        "data_qual": ["max", "last"],
     }
     col_names = {
         "m_mean": "m",
@@ -129,7 +126,6 @@ if __name__ == '__main__':
         "human_kl_dissim_mean": "human_kl_dissim",
         "code_kl_std_last": "code_kl_std",
         "human_kl_std_last": "human_kl_std",
-        "data_qual_mean": "data_qual",
     }
     time_data, agg_data = preprocess_dataset(
         df, run_aggs, time_aggs, col_names)

@@ -103,33 +103,6 @@ class OrganizationalCode(Agent):
         return
 
 
-class Data(Agent):
-
-    def __init__(self, unique_id, model):
-        super().__init__(unique_id, model)
-        self.state = random_reality(model.conf['m'])
-        self.update_kl()
-
-    def update_kl(self):
-        reality = self.model.get_reality()
-        self.kl = calc_kl(reality.state, self.state)
-        return
-
-    def learn(self):
-        q_d = self.model.conf["q_d"]
-        reality = self.model.get_reality()
-        # note: q_d will be scalar if scaling is off, vector if scaling is on
-        probs = np.random.binomial(1, q_d, self.model.conf['m'])
-        self.state = [
-            r if p == 1 else (-1)*r for (r, p) in zip(reality.state, probs)]
-        return
-
-    def step(self):
-        self.learn()
-        self.update_kl()
-        return
-
-
 class Human(Agent):
 
     def __init__(self, unique_id, model):
@@ -208,10 +181,13 @@ class MLAgent(Agent):
         if self.model.get_q_ml_scaling() == "on":
             q_ml = self.model.conf["q_ml"][self.model.conf["ml_dims"].index(
                 self.state["dim"])]
+            q_d = self.model.conf["q_d"][self.model.conf["ml_dims"].index(
+                self.state["dim"])]
         else:
             q_ml = self.model.conf["q_ml"]
+            q_d = self.model.conf["q_d"]
         # adopt reality value with q_ml, otherwise adopt incorrect value
-        if np.random.binomial(1, q_ml):
+        if np.random.binomial(1, q_ml*q_d):
             self.state["val"] = data_val
         else:
             self.state["val"] = (-1) * data_val
@@ -300,8 +276,6 @@ class Revision2Model(Model):
         # init reality
         r = Reality("R1", self)
         self.schedule.add(r)
-        d = Data("D1", self)
-        self.schedule.add(d)
         # init humans
         for i in range(self.conf["n"]):
             h = Human(f"H{i+1}", self)
@@ -344,7 +318,6 @@ class Revision2Model(Model):
                 "human_kl": calc_human_kl,
                 "human_kl_var": calc_kl_var,
                 "human_kl_dissim": calc_dissim,
-                "data_qual": calc_data_qual,
             }
         )
         # collect metrics for time step 0
@@ -370,9 +343,6 @@ class Revision2Model(Model):
     def get_reality(self):
         return self.schedule.agents[0]
 
-    def get_data(self):
-        return self.schedule.agents[1]
-
     def get_org_code(self):
         return self.schedule.agents[-1]
 
@@ -383,8 +353,6 @@ class Revision2Model(Model):
         return self.schedule.agents[(2 + self.conf["n"]):-1]
 
     def update_kls(self):
-        data = self.get_data()
-        data.update_kl()
         for h in self.get_human_agents():
             h.update_kl()
         for ml in self.get_ml_agents():
@@ -399,12 +367,9 @@ class Revision2Model(Model):
         if scaling == "on":
             # for belief related manipulation
             exp_grp = self.get_exp_grp()
-            j = self.get_j()
             ml_dims = self.conf["ml_dims"]
             q_ml = []
-            for i in range(j):
-                # current dimension
-                dim = ml_dims[i]
+            for dim in ml_dims:
                 # get knowledgeable group
                 exp_grp_dim = list(
                     filter(lambda h: (h.state[dim] != 0), exp_grp))
@@ -443,9 +408,9 @@ class Revision2Model(Model):
         if scaling == "on":
             # for belief related manipulation
             exp_grp = self.get_exp_grp()
-            m = self.get_m()
+            ml_dims = self.conf["ml_dims"]
             q_d = []
-            for dim in range(m):
+            for dim in ml_dims:
                 # get knowledgeable group
                 exp_grp_dim = list(
                     filter(lambda h: (h.state[dim] != 0), exp_grp))
