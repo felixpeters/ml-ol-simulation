@@ -4,35 +4,35 @@ import os
 from mesa.batchrunner import BatchRunnerMP
 
 from utils.runners import get_info, get_tracking_data, track_model_steps
-from utils.analysis import preprocess_dataset
+from utils.analysis import preprocess_dataset, run_aggs, time_aggs, col_names
 from utils.params import test_config, run_config
 from models.base_model import BaseModel
 
 if __name__ == '__main__':
 
-    # collected data will be saved in this folder
+    # define constants
     DATA_PATH = "data/"
     MODEL_NAME = "base"
-    # get the number of available CPUs for multi-processing
     CPU_COUNT = os.cpu_count() or 2
-    config = test_config
+    CONFIG = test_config
 
+    # create multi-process runner
     batch_run = BatchRunnerMP(
         BaseModel,
         nr_processes=CPU_COUNT,
-        variable_parameters=config["variable_params"],
-        fixed_parameters=config["fixed_params"],
-        iterations=config["num_iterations"],
-        max_steps=config["num_steps"],
+        variable_parameters=CONFIG["variable_params"],
+        fixed_parameters=CONFIG["fixed_params"],
+        iterations=CONFIG["num_iterations"],
+        max_steps=CONFIG["num_steps"],
         display_progress=True,
         model_reporters={
             "history": track_model_steps,
         },
     )
 
-    # simulation batch run
+    # run simulation
     total_iter, num_conf, num_iter = get_info(
-        batch_run, config["variable_params"])
+        batch_run, CONFIG["variable_params"])
     print(f'Starting simulation with the following setup:')
     print(f'- Total number of iterations: {total_iter}')
     print(f'- Number of configurations: {num_conf}')
@@ -45,89 +45,13 @@ if __name__ == '__main__':
     print(
         f'Simulation completed after {duration:.2f} seconds (speed: {total_iter/duration:.2f} iterations/second)')
 
-    # tracking data
+    # get tracking data
     df = get_tracking_data(batch_run)
-    print(f'Created dataframe from batch run data')
     timestr = time.strftime("%Y%m%d-%H%M%S")
     print(
-        f'Created raw dataframe with following shape: {df.shape[0]} rows, {df.shape[1]} columns')
+        f'Created raw dataframe from batch run data with following shape: {df.shape[0]} rows, {df.shape[1]} columns')
 
-    # data preprocessing
-    run_aggs = {
-        "m": "mean",
-        "n": "mean",
-        "j": "mean",
-        "p_1": "mean",
-        "p_2": "mean",
-        "p_3": "mean",
-        "q_h1": "mean",
-        "q_h2": "mean",
-        "q_ml": "mean",
-        "q_d": "mean",
-        "alpha_d": "mean",
-        "alpha_ml": "mean",
-        "p_turb": "mean",
-        "q_ml_scaling": "last",
-        "q_d_scaling": "last",
-        "avg_q_d": "mean",
-        "avg_q_ml": "mean",
-        "code_kl": ["mean", "std"],
-        "human_kl": ["mean", "std"],
-        "human_kl_var": "mean",
-        "human_kl_dissim": "mean",
-    }
-    time_aggs = {
-        "m": "mean",
-        "n": "last",
-        "j": "last",
-        "p_1": "mean",
-        "p_2": "mean",
-        "p_3": "mean",
-        "q_h1": "mean",
-        "q_h2": "mean",
-        "q_ml": "mean",
-        "q_d": "mean",
-        "alpha_d": "mean",
-        "alpha_ml": "mean",
-        "p_turb": "mean",
-        "q_ml_scaling": "last",
-        "q_d_scaling": "last",
-        "avg_q_d": ["max", "last"],
-        "avg_q_ml": ["max", "last"],
-        "code_kl": ["max", "last"],
-        "human_kl": ["max", "last"],
-        "human_kl_var": ["max", "last"],
-        "code_kl_std": "last",
-        "human_kl_std": "last",
-        "human_kl_dissim": ["max", "last"],
-    }
-    col_names = {
-        "m_mean": "m",
-        "n_last": "n",
-        "n_mean": "n",
-        "j_last": "j",
-        "j_mean": "j",
-        "p_1_mean": "p_1",
-        "p_2_mean": "p_2",
-        "p_3_mean": "p_3",
-        "q_h1_mean": "q_h1",
-        "q_h2_mean": "q_h2",
-        "q_ml_mean": "q_ml",
-        "q_d_mean": "q_d",
-        "alpha_d_mean": "alpha_d",
-        "alpha_ml_mean": "alpha_ml",
-        "p_turb_mean": "p_turb",
-        "avg_q_d_mean": "avg_q_d",
-        "avg_q_ml_mean": "avg_q_ml",
-        "code_kl_mean": "code_kl",
-        "q_ml_scaling_last": "q_ml_scaling",
-        "q_d_scaling_last": "q_d_scaling",
-        "human_kl_mean": "human_kl",
-        "human_kl_var_mean": "human_kl_var",
-        "human_kl_dissim_mean": "human_kl_dissim",
-        "code_kl_std_last": "code_kl_std",
-        "human_kl_std_last": "human_kl_std",
-    }
+    # preprocess data
     time_data, agg_data = preprocess_dataset(
         df, run_aggs, time_aggs, col_names)
     time_fname = f"{DATA_PATH}{MODEL_NAME}_ts_{timestr}.csv"
