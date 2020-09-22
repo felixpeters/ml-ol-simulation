@@ -4,12 +4,14 @@ import math
 from collections import Counter
 from functools import partialmethod
 
+import numpy as np
 from mesa import Agent, Model
 from mesa.time import BaseScheduler
 from mesa.datacollection import DataCollector
 
 from utils.metrics import *
 from utils.agents import *
+
 
 class Reality(Agent):
 
@@ -22,11 +24,13 @@ class Reality(Agent):
     def turbulence(self):
         p_turb = self.model.conf["p_turb"]
         probs = np.random.binomial(1, p_turb, len(self.state))
-        self.state = [(-1)*s if p==1 else s for (s, p) in zip(self.state, probs)]
+        self.state = [(-1)*s if p == 1 else s for (s, p)
+                      in zip(self.state, probs)]
         return
 
     def step(self):
         return
+
 
 class OrganizationalCode(Agent):
 
@@ -72,10 +76,12 @@ class OrganizationalCode(Agent):
             # learn from expert group if majority belief differs from own
             if maj != self.state[dim]:
                 size_min = 0
-                if len(c.most_common()) > 1: _, size_min = c.most_common()[1]
+                if len(c.most_common()) > 1:
+                    _, size_min = c.most_common()[1]
                 # update learning rate according to consensus strength
                 p_update = 1 - (1 - p_2) ** (size_maj - size_min)
-                if np.random.binomial(1, p_update): self.state[dim] = maj
+                if np.random.binomial(1, p_update):
+                    self.state[dim] = maj
         return
 
     def learn_from_ml(self, dim):
@@ -86,7 +92,8 @@ class OrganizationalCode(Agent):
             ml_val = ml.state["val"]
             # learn from ML if its belief differs from own
             if ml_val != self.state[dim]:
-                if np.random.binomial(1, p_3): self.state[dim] = ml_val
+                if np.random.binomial(1, p_3):
+                    self.state[dim] = ml_val
         return
 
     def step(self):
@@ -94,6 +101,7 @@ class OrganizationalCode(Agent):
         self.learn()
         self.update_kl()
         return
+
 
 class Data(Agent):
 
@@ -112,13 +120,15 @@ class Data(Agent):
         reality = self.model.get_reality()
         # note: q_d will be scalar if scaling is off, vector if scaling is on
         probs = np.random.binomial(1, q_d, self.model.conf['m'])
-        self.state = [r if p==1 else (-1)*r for (r,p) in zip(reality.state, probs)]
+        self.state = [
+            r if p == 1 else (-1)*r for (r, p) in zip(reality.state, probs)]
         return
 
     def step(self):
         self.learn()
         self.update_kl()
         return
+
 
 class Human(Agent):
 
@@ -148,7 +158,7 @@ class Human(Agent):
         q_h1 = self.model.conf["q_h1"]
         q_h2 = self.model.conf["q_h2"]
         # learn with probability q_h1
-        if np.random.binomial(1, q_h1): 
+        if np.random.binomial(1, q_h1):
             # learn correct value with probability q_h2, incorrect value
             # otherwise
             if np.random.binomial(1, q_h2):
@@ -162,7 +172,8 @@ class Human(Agent):
         p_1 = self.model.conf["p_1"]
         # learn from code noly if code belief differs from own
         if self.state[dim] != code.state[dim] and code.state[dim] != 0:
-            if np.random.binomial(1, p_1): self.state[dim] = code.state[dim]
+            if np.random.binomial(1, p_1):
+                self.state[dim] = code.state[dim]
         return
 
     def step(self):
@@ -171,6 +182,8 @@ class Human(Agent):
         return
 
 # TODO: unify ML agents into single agents in order to allow speed-up
+
+
 class MLAgent(Agent):
 
     def __init__(self, unique_id, model, dim):
@@ -189,11 +202,12 @@ class MLAgent(Agent):
         return
 
     def learn(self):
-        data = self.model.get_data()
+        data = self.model.get_reality()
         data_val = data.state[self.state["dim"]]
-        #get q_ml depending on q_ml_scaling
+        # get q_ml depending on q_ml_scaling
         if self.model.get_q_ml_scaling() == "on":
-            q_ml = self.model.conf["q_ml"][self.model.conf["ml_dims"].index(self.state["dim"])]
+            q_ml = self.model.conf["q_ml"][self.model.conf["ml_dims"].index(
+                self.state["dim"])]
         else:
             q_ml = self.model.conf["q_ml"]
         # adopt reality value with q_ml, otherwise adopt incorrect value
@@ -208,47 +222,48 @@ class MLAgent(Agent):
         self.update_kl()
         return
 
+
 class Revision2Model(Model):
 
     def __init__(
-            self,
-            n=50, 
-            j=5, 
-            m=30, 
-            p_1=0.1, 
-            p_2=0.9,
-            p_3=0.9,
-            q_h1=0.1,
-            q_h2=0.1,
-            q_d=0.7,
-            q_ml=0.5,
-            alpha=10,
-            p_turb=0.1,
-            q_ml_scaling="off",
-            q_d_scaling="off",
-        ):
+        self,
+        n=50,
+        j=5,
+        m=30,
+        p_1=0.1,
+        p_2=0.9,
+        p_3=0.9,
+        q_h1=0.1,
+        q_h2=0.1,
+        q_d=0.7,
+        q_ml=0.5,
+        alpha=10,
+        p_turb=0.1,
+        q_ml_scaling="off",
+        q_d_scaling="off",
+    ):
         # reset random seeds prior to each iteration
         np.random.seed()
         random.seed()
         # save configuration
         self.conf = {
-                "n": n,
-                "j": j,
-                "m": m,
-                "p_1": p_1,
-                "p_2": p_2,
-                "p_3": p_3,
-                "q_h1": q_h1,
-                "q_h2": q_h2,
-                "q_d": q_d,
-                "q_d_basic": q_d,
-                "q_ml": q_ml,
-                "q_ml_basic": q_ml,
-                "alpha_ml": alpha,
-                "alpha_d": alpha,
-                "p_turb": p_turb,
-                "q_ml_scaling": q_ml_scaling,
-                "q_d_scaling": q_ml_scaling,
+            "n": n,
+            "j": j,
+            "m": m,
+            "p_1": p_1,
+            "p_2": p_2,
+            "p_3": p_3,
+            "q_h1": q_h1,
+            "q_h2": q_h2,
+            "q_d": q_d,
+            "q_d_basic": q_d,
+            "q_ml": q_ml,
+            "q_ml_basic": q_ml,
+            "alpha_ml": alpha,
+            "alpha_d": alpha,
+            "p_turb": p_turb,
+            "q_ml_scaling": q_ml_scaling,
+            "q_d_scaling": q_ml_scaling,
         }
         self.running = True
         self.schedule = BaseScheduler(self)
@@ -260,30 +275,30 @@ class Revision2Model(Model):
         return self.conf[param]
 
     # necessary in order to satisfy data collector interface
-    get_m = partialmethod(get_config, "m") 
-    get_n = partialmethod(get_config, "n") 
-    get_j = partialmethod(get_config, "j") 
-    get_p_1 = partialmethod(get_config, "p_1") 
-    get_p_2 = partialmethod(get_config, "p_2") 
-    get_p_3 = partialmethod(get_config, "p_3") 
-    get_q_h1 = partialmethod(get_config, "q_h1") 
-    get_q_h2 = partialmethod(get_config, "q_h2") 
-    get_q_d = partialmethod(get_config, "q_d") 
+    get_m = partialmethod(get_config, "m")
+    get_n = partialmethod(get_config, "n")
+    get_j = partialmethod(get_config, "j")
+    get_p_1 = partialmethod(get_config, "p_1")
+    get_p_2 = partialmethod(get_config, "p_2")
+    get_p_3 = partialmethod(get_config, "p_3")
+    get_q_h1 = partialmethod(get_config, "q_h1")
+    get_q_h2 = partialmethod(get_config, "q_h2")
+    get_q_d = partialmethod(get_config, "q_d")
     get_q_ml = partialmethod(get_config, "q_ml")
     get_q_ml_basic = partialmethod(get_config, "q_ml_basic")
     get_q_d_basic = partialmethod(get_config, "q_d_basic")
     get_alpha_ml = partialmethod(get_config, "alpha_ml")
     get_alpha_d = partialmethod(get_config, "alpha_d")
     get_p_turb = partialmethod(get_config, "p_turb")
-    get_q_ml_scaling = partialmethod(get_config, "q_ml_scaling") 
-    get_q_d_scaling = partialmethod(get_config, "q_d_scaling") 
+    get_q_ml_scaling = partialmethod(get_config, "q_ml_scaling")
+    get_q_d_scaling = partialmethod(get_config, "q_d_scaling")
 
     def get_time(self, *args):
         return int(self.schedule.time)
 
     def init_env(self):
         # init reality
-        r = Reality("R1", self) 
+        r = Reality("R1", self)
         self.schedule.add(r)
         d = Data("D1", self)
         self.schedule.add(d)
@@ -306,31 +321,31 @@ class Revision2Model(Model):
     def init_dc(self):
         # data collector enables tracking of metric at each time step
         self.datacollector = DataCollector(
-                model_reporters = {
-                    "time": self.get_time,
-                    "m": self.get_m,
-                    "n": self.get_n,
-                    "j": self.get_j,
-                    "p_1": self.get_p_1,
-                    "p_2": self.get_p_2,
-                    "p_3": self.get_p_3,
-                    "q_h1": self.get_q_h1,
-                    "q_h2": self.get_q_h2,
-                    "q_d": self.get_q_d_basic,
-                    "q_ml": self.get_q_ml_basic,
-                    "alpha_ml": self.get_alpha_ml,
-                    "alpha_d": self.get_alpha_d,
-                    "p_turb": self.get_p_turb,
-                    "q_ml_scaling": self.get_q_ml_scaling,
-                    "q_d_scaling": self.get_q_d_scaling,
-                    "avg_q_d": calc_avg_q_d,
-                    "avg_q_ml": calc_avg_q_ml,
-                    "code_kl": calc_code_kl,
-                    "human_kl": calc_human_kl,
-                    "human_kl_var": calc_kl_var,
-                    "human_kl_dissim": calc_dissim,
-                    "data_qual": calc_data_qual,
-                }
+            model_reporters={
+                "time": self.get_time,
+                "m": self.get_m,
+                "n": self.get_n,
+                "j": self.get_j,
+                "p_1": self.get_p_1,
+                "p_2": self.get_p_2,
+                "p_3": self.get_p_3,
+                "q_h1": self.get_q_h1,
+                "q_h2": self.get_q_h2,
+                "q_d": self.get_q_d_basic,
+                "q_ml": self.get_q_ml_basic,
+                "alpha_ml": self.get_alpha_ml,
+                "alpha_d": self.get_alpha_d,
+                "p_turb": self.get_p_turb,
+                "q_ml_scaling": self.get_q_ml_scaling,
+                "q_d_scaling": self.get_q_d_scaling,
+                "avg_q_d": calc_avg_q_d,
+                "avg_q_ml": calc_avg_q_ml,
+                "code_kl": calc_code_kl,
+                "human_kl": calc_human_kl,
+                "human_kl_var": calc_kl_var,
+                "human_kl_dissim": calc_dissim,
+                "data_qual": calc_data_qual,
+            }
         )
         # collect metrics for time step 0
         self.datacollector.collect(self)
@@ -379,88 +394,86 @@ class Revision2Model(Model):
         return
 
     def scale_q_ml(self):
-        #for avg. human knowledge related manipulation
+        # for avg. human knowledge related manipulation
         scaling = self.conf["q_ml_scaling"]
         if scaling == "on":
-            humans = self.get_human_agents()
-            human_kl = np.mean([h.kl for h in humans])
-            #for belief related manipulation
+            # for belief related manipulation
             exp_grp = self.get_exp_grp()
             j = self.get_j()
             ml_dims = self.conf["ml_dims"]
             q_ml = []
             for i in range(j):
-                #current dimension
+                # current dimension
                 dim = ml_dims[i]
-                #get knowledgeable group
-                exp_grp_dim = list(filter(lambda h: (h.state[dim] != 0), exp_grp))
-                #get basic parameters
+                # get knowledgeable group
+                exp_grp_dim = list(
+                    filter(lambda h: (h.state[dim] != 0), exp_grp))
+                # get basic parameters
                 reality = self.get_reality().state[dim]
                 q_ml_basic = self.conf["q_ml_basic"]
 
                 if len(exp_grp_dim) > 0:
-                    #if expert group exists, count correct and incorrect beliefs
+                    # if expert group exists, count correct and incorrect beliefs
                     votes = [h.state[dim] for h in exp_grp_dim]
                     c = Counter(votes)
 
                     if len(c) > 1:
-                        #if expert group has correct and incorrect beliefs calculate difference
+                        # if expert group has correct and incorrect beliefs calculate difference
                         k = c.get(reality)-c.get((-1)*reality)
                     else:
                         if votes[0] == reality:
-                            #all expert beliefs are correct
+                            # all expert beliefs are correct
                             k = c.get(reality)
                         else:
-                            #all expert beliefs are incorrerect
+                            # all expert beliefs are incorrerect
                             k = c.get((-1)*reality)
-                    #see Google Drive/Forschung/MISQ/ExtensionDesign for formulas
+                    # see Google Drive/Forschung/MISQ/ExtensionDesign for formulas
                     alpha = self.conf["alpha_ml"]
                     beta = math.log((1-q_ml_basic)/q_ml_basic)
-                    q_ml.append(round(1/(1+math.e**(((-1)*k/alpha)+beta)),3))
+                    q_ml.append(round(1/(1+math.e**(((-1)*k/alpha)+beta)), 3))
                 else:
-                    #if there are no experts, use basic q_ml value
+                    # if there are no experts, use basic q_ml value
                     q_ml.append(q_ml_basic)
             self.conf["q_ml"] = q_ml
         return
 
     def scale_q_d(self):
-        #for avg. human knowledge related manipulation
+        # for avg. human knowledge related manipulation
         scaling = self.conf["q_d_scaling"]
         if scaling == "on":
-            humans = self.get_human_agents()
-            human_kl = np.mean([h.kl for h in humans])
-            #for belief related manipulation
+            # for belief related manipulation
             exp_grp = self.get_exp_grp()
             m = self.get_m()
             q_d = []
             for dim in range(m):
-                #get knowledgeable group
-                exp_grp_dim = list(filter(lambda h: (h.state[dim] != 0), exp_grp))
-                #get basic parameters
+                # get knowledgeable group
+                exp_grp_dim = list(
+                    filter(lambda h: (h.state[dim] != 0), exp_grp))
+                # get basic parameters
                 reality = self.get_reality().state[dim]
                 q_d_basic = self.conf["q_d_basic"]
 
                 if len(exp_grp_dim) > 0:
-                    #if expert group exists, count correct and incorrect beliefs
+                    # if expert group exists, count correct and incorrect beliefs
                     votes = [h.state[dim] for h in exp_grp_dim]
                     c = Counter(votes)
 
                     if len(c) > 1:
-                        #if expert group has correct and incorrect beliefs calculate difference
+                        # if expert group has correct and incorrect beliefs calculate difference
                         k = c.get(reality)-c.get((-1)*reality)
                     else:
                         if votes[0] == reality:
-                            #all expert beliefs are correct
+                            # all expert beliefs are correct
                             k = c.get(reality)
                         else:
-                            #all expert beliefs are incorrerect
+                            # all expert beliefs are incorrerect
                             k = c.get((-1)*reality)
-                    #see Google Drive/Forschung/MISQ/ExtensionDesign for formulas
+                    # see Google Drive/Forschung/MISQ/ExtensionDesign for formulas
                     alpha = self.conf["alpha_d"]
                     beta = math.log((1-q_d_basic)/q_d_basic)
-                    q_d.append(round(1/(1+math.e**(((-1)*k/alpha)+beta)),3))
+                    q_d.append(round(1/(1+math.e**(((-1)*k/alpha)+beta)), 3))
                 else:
-                    #if there are no experts, use basic q_ml value
+                    # if there are no experts, use basic q_ml value
                     q_d.append(q_d_basic)
             self.conf["q_d"] = q_d
         return
