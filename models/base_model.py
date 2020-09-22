@@ -154,11 +154,10 @@ class Human(Agent):
         self.update_kl()
         return
 
-# TODO: unify ML agents into single agent in order to allow speed-up
-
 
 class MLAgent(Agent):
 
+    # TODO: unify ML agents into single agent in order to allow speed-up
     def __init__(self, unique_id, model, dim):
         super().__init__(unique_id, model)
         # state consists of non-zero dimension and current value
