@@ -9,8 +9,8 @@ from mesa import Agent, Model
 from mesa.time import BaseScheduler
 from mesa.datacollection import DataCollector
 
-from utils.metrics import *
-from utils.agents import *
+from .utils.metrics import calc_kl, calc_code_kl, calc_human_kl, calc_avg_q_d, calc_avg_q_ml, calc_kl_var, calc_dissim
+from .utils.agents import random_beliefs, random_dims, random_reality
 
 
 class Reality(Agent):
@@ -154,7 +154,7 @@ class Human(Agent):
         self.update_kl()
         return
 
-# TODO: unify ML agents into single agents in order to allow speed-up
+# TODO: unify ML agents into single agent in order to allow speed-up
 
 
 class MLAgent(Agent):
@@ -347,10 +347,10 @@ class Revision2Model(Model):
         return self.schedule.agents[-1]
 
     def get_human_agents(self):
-        return self.schedule.agents[2:(2 + self.conf["n"])]
+        return self.schedule.agents[1:(1 + self.conf["n"])]
 
     def get_ml_agents(self):
-        return self.schedule.agents[(2 + self.conf["n"]):-1]
+        return self.schedule.agents[(1 + self.conf["n"]):-1]
 
     def update_kls(self):
         for h in self.get_human_agents():
