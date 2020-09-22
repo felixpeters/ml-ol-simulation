@@ -6,7 +6,7 @@ from mesa.batchrunner import BatchRunnerMP
 from utils.runners import get_info, get_tracking_data, track_model_steps
 from utils.analysis import preprocess_dataset
 from utils.params import test_config, run_config
-from models.revision_2_model import Revision2Model
+from models.base_model import BaseModel
 
 if __name__ == '__main__':
 
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     config = test_config
 
     batch_run = BatchRunnerMP(
-        Revision2Model,
+        BaseModel,
         nr_processes=CPU_COUNT,
         variable_parameters=config["variable_params"],
         fixed_parameters=config["fixed_params"],
@@ -129,11 +129,11 @@ if __name__ == '__main__':
     }
     time_data, agg_data = preprocess_dataset(
         df, run_aggs, time_aggs, col_names)
-    time_fname = f"{DATA_PATH}r2_ts_{timestr}.csv"
+    time_fname = f"{DATA_PATH}base_ts_{timestr}.csv"
     time_data.to_csv(time_fname)
     print(
         f'Saved time-series dataframe ({time_data.shape[0]} rows, {time_data.shape[1]} columns) to file {time_fname}')
-    agg_fname = f"{DATA_PATH}r2_agg_{timestr}.csv"
+    agg_fname = f"{DATA_PATH}base_agg_{timestr}.csv"
     agg_data.to_csv(agg_fname)
     print(
         f'Saved aggregated dataframe ({agg_data.shape[0]} rows, {agg_data.shape[1]} columns) to file {agg_fname}')

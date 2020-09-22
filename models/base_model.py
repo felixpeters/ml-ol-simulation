@@ -199,7 +199,7 @@ class MLAgent(Agent):
         return
 
 
-class Revision2Model(Model):
+class BaseModel(Model):
 
     def __init__(
         self,
