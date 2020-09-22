@@ -7,6 +7,7 @@ from utils.runners import get_info, get_tracking_data, track_model_steps
 from utils.analysis import preprocess_dataset, run_aggs, time_aggs, col_names
 from utils.config import test_config, run_config
 from models.base_model import BaseModel
+from models.alt_model import AlternativeModel
 
 if __name__ == '__main__':
 
@@ -18,7 +19,7 @@ if __name__ == '__main__':
 
     # create multi-process runner
     batch_run = BatchRunnerMP(
-        BaseModel,
+        AlternativeModel,
         nr_processes=CPU_COUNT,
         variable_parameters=CONFIG["variable_params"],
         fixed_parameters=CONFIG["fixed_params"],
