@@ -37,15 +37,6 @@ def calc_kl_var(model):
     return np.var(kls)
 
 
-def calc_avg_q_d(model):
-    result = 0.0
-    if model.conf["q_d_scaling"] == "on":
-        result = np.mean(model.conf["q_d"])
-    else:
-        result = model.conf["q_d"]
-    return result
-
-
 def calc_avg_q_ml(model):
     result = 0.0
     if model.conf["q_ml_scaling"] == "on":

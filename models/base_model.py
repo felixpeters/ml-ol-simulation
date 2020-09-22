@@ -9,7 +9,7 @@ from mesa import Agent, Model
 from mesa.time import BaseScheduler
 from mesa.datacollection import DataCollector
 
-from .utils.metrics import calc_kl, calc_code_kl, calc_human_kl, calc_avg_q_d, calc_avg_q_ml, calc_kl_var, calc_dissim
+from .utils.metrics import calc_kl, calc_code_kl, calc_human_kl, calc_avg_q_ml, calc_kl_var, calc_dissim
 from .utils.agents import random_beliefs, random_dims, random_reality
 
 
@@ -180,13 +180,10 @@ class MLAgent(Agent):
         if self.model.get_q_ml_scaling() == "on":
             q_ml = self.model.conf["q_ml"][self.model.conf["ml_dims"].index(
                 self.state["dim"])]
-            q_d = self.model.conf["q_d"][self.model.conf["ml_dims"].index(
-                self.state["dim"])]
         else:
             q_ml = self.model.conf["q_ml"]
-            q_d = self.model.conf["q_d"]
         # adopt reality value with q_ml, otherwise adopt incorrect value
-        if np.random.binomial(1, q_ml*q_d):
+        if np.random.binomial(1, q_ml):
             self.state["val"] = data_val
         else:
             self.state["val"] = (-1) * data_val
@@ -210,12 +207,10 @@ class BaseModel(Model):
         p_3=0.9,
         q_h1=0.1,
         q_h2=0.1,
-        q_d=0.7,
         q_ml=0.5,
         alpha=10,
         p_turb=0.1,
         q_ml_scaling="off",
-        q_d_scaling="off",
     ):
         # reset random seeds prior to each iteration
         np.random.seed()
@@ -230,15 +225,11 @@ class BaseModel(Model):
             "p_3": p_3,
             "q_h1": q_h1,
             "q_h2": q_h2,
-            "q_d": q_d,
-            "q_d_basic": q_d,
             "q_ml": q_ml,
             "q_ml_basic": q_ml,
             "alpha_ml": alpha,
-            "alpha_d": alpha,
             "p_turb": p_turb,
             "q_ml_scaling": q_ml_scaling,
-            "q_d_scaling": q_ml_scaling,
         }
         self.running = True
         self.schedule = BaseScheduler(self)
@@ -258,15 +249,11 @@ class BaseModel(Model):
     get_p_3 = partialmethod(get_config, "p_3")
     get_q_h1 = partialmethod(get_config, "q_h1")
     get_q_h2 = partialmethod(get_config, "q_h2")
-    get_q_d = partialmethod(get_config, "q_d")
     get_q_ml = partialmethod(get_config, "q_ml")
     get_q_ml_basic = partialmethod(get_config, "q_ml_basic")
-    get_q_d_basic = partialmethod(get_config, "q_d_basic")
     get_alpha_ml = partialmethod(get_config, "alpha_ml")
-    get_alpha_d = partialmethod(get_config, "alpha_d")
     get_p_turb = partialmethod(get_config, "p_turb")
     get_q_ml_scaling = partialmethod(get_config, "q_ml_scaling")
-    get_q_d_scaling = partialmethod(get_config, "q_d_scaling")
 
     def get_time(self, *args):
         return int(self.schedule.time)
@@ -304,14 +291,10 @@ class BaseModel(Model):
                 "p_3": self.get_p_3,
                 "q_h1": self.get_q_h1,
                 "q_h2": self.get_q_h2,
-                "q_d": self.get_q_d_basic,
                 "q_ml": self.get_q_ml_basic,
                 "alpha_ml": self.get_alpha_ml,
-                "alpha_d": self.get_alpha_d,
                 "p_turb": self.get_p_turb,
                 "q_ml_scaling": self.get_q_ml_scaling,
-                "q_d_scaling": self.get_q_d_scaling,
-                "avg_q_d": calc_avg_q_d,
                 "avg_q_ml": calc_avg_q_ml,
                 "code_kl": calc_code_kl,
                 "human_kl": calc_human_kl,
@@ -401,47 +384,6 @@ class BaseModel(Model):
             self.conf["q_ml"] = q_ml
         return
 
-    def scale_q_d(self):
-        # for avg. human knowledge related manipulation
-        scaling = self.conf["q_d_scaling"]
-        if scaling == "on":
-            # for belief related manipulation
-            exp_grp = self.get_exp_grp()
-            ml_dims = self.conf["ml_dims"]
-            q_d = []
-            for dim in ml_dims:
-                # get knowledgeable group
-                exp_grp_dim = list(
-                    filter(lambda h: (h.state[dim] != 0), exp_grp))
-                # get basic parameters
-                reality = self.get_reality().state[dim]
-                q_d_basic = self.conf["q_d_basic"]
-
-                if len(exp_grp_dim) > 0:
-                    # if expert group exists, count correct and incorrect beliefs
-                    votes = [h.state[dim] for h in exp_grp_dim]
-                    c = Counter(votes)
-
-                    if len(c) > 1:
-                        # if expert group has correct and incorrect beliefs calculate difference
-                        k = c.get(reality)-c.get((-1)*reality)
-                    else:
-                        if votes[0] == reality:
-                            # all expert beliefs are correct
-                            k = c.get(reality)
-                        else:
-                            # all expert beliefs are incorrerect
-                            k = c.get((-1)*reality)
-                    # see Google Drive/Forschung/MISQ/ExtensionDesign for formulas
-                    alpha = self.conf["alpha_d"]
-                    beta = math.log((1-q_d_basic)/q_d_basic)
-                    q_d.append(round(1/(1+math.e**(((-1)*k/alpha)+beta)), 3))
-                else:
-                    # if there are no experts, use basic q_ml value
-                    q_d.append(q_d_basic)
-            self.conf["q_d"] = q_d
-        return
-
     def environmental_turbulence(self):
         reality = self.get_reality()
         reality.turbulence()
@@ -453,8 +395,6 @@ class BaseModel(Model):
             self.update_kls()
             # determine expert group for this time step
             self.exp_grp = self.get_exp_grp()
-            # scale q_d according to human KL
-            self.scale_q_d()
             # scale q_ml according to human KL
             self.scale_q_ml()
             # update all agents
