@@ -5,7 +5,7 @@ from mesa.batchrunner import BatchRunnerMP
 
 from utils.runners import get_info, get_tracking_data, track_model_steps
 from utils.analysis import preprocess_dataset, run_aggs, time_aggs, col_names
-from utils.params import test_config, run_config
+from utils.config import test_config, run_config
 from models.base_model import BaseModel
 
 if __name__ == '__main__':
