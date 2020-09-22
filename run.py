@@ -4,7 +4,7 @@ import os
 from mesa.batchrunner import BatchRunnerMP
 
 from utils.runners import get_info, get_tracking_data
-from utils.metrics import *
+from models.utils.metrics import *
 from utils.analysis import preprocess_dataset
 from utils.params import test_config, run_config
 from models.revision_2_model import Revision2Model
@@ -16,23 +16,23 @@ if __name__ == '__main__':
     # get the number of available CPUs for multi-processing
     CPU_COUNT = os.cpu_count() or 2
     config = test_config
-    
+
     batch_run = BatchRunnerMP(
         Revision2Model,
         nr_processes=CPU_COUNT,
         variable_parameters=config["variable_params"],
         fixed_parameters=config["fixed_params"],
-        iterations=config["num_iterations"], 
-        max_steps=config["num_steps"], 
+        iterations=config["num_iterations"],
+        max_steps=config["num_steps"],
         display_progress=True,
         model_reporters={
-            "history": track_model_steps, 
+            "history": track_model_steps,
         },
     )
-    
 
     # simulation batch run
-    total_iter, num_conf, num_iter = get_info(batch_run, config["variable_params"])
+    total_iter, num_conf, num_iter = get_info(
+        batch_run, config["variable_params"])
     print(f'Starting simulation with the following setup:')
     print(f'- Total number of iterations: {total_iter}')
     print(f'- Number of configurations: {num_conf}')
@@ -42,14 +42,16 @@ if __name__ == '__main__':
     batch_run.run_all()
     end = time.time()
     duration = end - start
-    print(f'Simulation completed after {duration:.2f} seconds (speed: {total_iter/duration:.2f} iterations/second)')
-    
+    print(
+        f'Simulation completed after {duration:.2f} seconds (speed: {total_iter/duration:.2f} iterations/second)')
+
     # tracking data
     df = get_tracking_data(batch_run)
     print(f'Created dataframe from batch run data')
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    print(f'Created raw dataframe with following shape: {df.shape[0]} rows, {df.shape[1]} columns')
-    
+    print(
+        f'Created raw dataframe with following shape: {df.shape[0]} rows, {df.shape[1]} columns')
+
     # data preprocessing
     run_aggs = {
         "m": "mean",
@@ -129,10 +131,13 @@ if __name__ == '__main__':
         "human_kl_std_last": "human_kl_std",
         "data_qual_mean": "data_qual",
     }
-    time_data, agg_data = preprocess_dataset(df, run_aggs, time_aggs, col_names)
+    time_data, agg_data = preprocess_dataset(
+        df, run_aggs, time_aggs, col_names)
     time_fname = f"{DATA_PATH}r2_ts_{timestr}.csv"
     time_data.to_csv(time_fname)
-    print(f'Saved time-series dataframe ({time_data.shape[0]} rows, {time_data.shape[1]} columns) to file {time_fname}')
+    print(
+        f'Saved time-series dataframe ({time_data.shape[0]} rows, {time_data.shape[1]} columns) to file {time_fname}')
     agg_fname = f"{DATA_PATH}r2_agg_{timestr}.csv"
     agg_data.to_csv(agg_fname)
-    print(f'Saved aggregated dataframe ({agg_data.shape[0]} rows, {agg_data.shape[1]} columns) to file {agg_fname}')
+    print(
+        f'Saved aggregated dataframe ({agg_data.shape[0]} rows, {agg_data.shape[1]} columns) to file {agg_fname}')
