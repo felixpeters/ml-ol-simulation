@@ -371,7 +371,7 @@ class AlternativeModel(Model):
                             # all human beliefs are correct
                             k = c.get(reality)
                         else:
-                            # all human beliefs are incorrerect
+                            # all human beliefs are incorrect
                             k = c.get((-1)*reality)
                     # scale q_ml parameter according to sigmoid function
                     alpha = self.conf["alpha_ml"]
