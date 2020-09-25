@@ -13,13 +13,13 @@ if __name__ == '__main__':
 
     # define constants
     DATA_PATH = "data/"
-    MODEL_NAME = "base"
+    MODEL_NAME = "alt"
     CPU_COUNT = os.cpu_count() or 2
     CONFIG = test_config
 
     # create multi-process runner
     batch_run = BatchRunnerMP(
-        AlternativeModel,
+        (BaseModel if MODEL_NAME == "base" else AlternativeModel),
         nr_processes=CPU_COUNT,
         variable_parameters=CONFIG["variable_params"],
         fixed_parameters=CONFIG["fixed_params"],
@@ -35,6 +35,7 @@ if __name__ == '__main__':
     total_iter, num_conf, num_iter = get_info(
         batch_run, CONFIG["variable_params"])
     print(f'Starting simulation with the following setup:')
+    print(f'- Simulation model: {batch_run.model_cls.__name__}')
     print(f'- Total number of iterations: {total_iter}')
     print(f'- Number of configurations: {num_conf}')
     print(f'- Iterations per configuration: {num_iter}')

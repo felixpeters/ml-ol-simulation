@@ -348,38 +348,38 @@ class BaseModel(Model):
         scaling = self.conf["q_ml_scaling"]
         if scaling == "on":
             # for belief related manipulation
-            exp_grp = self.get_exp_grp()
+            humans = self.get_human_agents()
             ml_dims = self.conf["ml_dims"]
             q_ml = []
             for dim in ml_dims:
                 # get knowledgeable group
-                exp_grp_dim = list(
-                    filter(lambda h: (h.state[dim] != 0), exp_grp))
+                humans_dim = list(
+                    filter(lambda h: (h.state[dim] != 0), humans))
                 # get basic parameters
                 reality = self.get_reality().state[dim]
                 q_ml_basic = self.conf["q_ml_basic"]
 
-                if len(exp_grp_dim) > 0:
-                    # if expert group exists, count correct and incorrect beliefs
-                    votes = [h.state[dim] for h in exp_grp_dim]
+                if len(humans_dim) > 0:
+                    # if knowledgeable group exists, count correct and incorrect beliefs
+                    votes = [h.state[dim] for h in humans_dim]
                     c = Counter(votes)
 
                     if len(c) > 1:
-                        # if expert group has correct and incorrect beliefs calculate difference
+                        # if knowledgeable group has correct and incorrect beliefs calculate difference
                         k = c.get(reality)-c.get((-1)*reality)
                     else:
                         if votes[0] == reality:
-                            # all expert beliefs are correct
+                            # all human beliefs are correct
                             k = c.get(reality)
                         else:
-                            # all expert beliefs are incorrerect
+                            # all human beliefs are incorrerect
                             k = c.get((-1)*reality)
-                    # see Google Drive/Forschung/MISQ/ExtensionDesign for formulas
+                    # scale q_ml parameter according to sigmoid function
                     alpha = self.conf["alpha_ml"]
                     beta = math.log((1-q_ml_basic)/q_ml_basic)
                     q_ml.append(round(1/(1+math.e**(((-1)*k/alpha)+beta)), 3))
                 else:
-                    # if there are no experts, use basic q_ml value
+                    # if there are no knowledgeable humans, use basic q_ml value
                     q_ml.append(q_ml_basic)
             self.conf["q_ml"] = q_ml
         return
