@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -J ml-ol-sim
-#SBATCH --mail -user=peters@is.tu-darmstadt.de
-#SBATCH --mail -type=ALL
+#SBATCH --mail-user=peters@is.tu-darmstadt.de
+#SBATCH --mail-type=ALL
 #SBATCH -e ~/%x.err.%j
 #SBATCH -o ~/%x.out.%j
 #SBATCH -t 24:00:00
@@ -12,9 +12,10 @@
 
 
 echo "Job $SLURM_JOB_ID started at $(date)"
+module load gcc
 module load python
 pip install -r requirements.txt
-python run.py
+python run.py --config $1 --slice $2
 EXITSTATUS=$?
 echo "Job $SLURM_JOB_ID finished at $(date)"
 exit $EXITSTATUS
