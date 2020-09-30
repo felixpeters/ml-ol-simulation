@@ -80,11 +80,11 @@ if __name__ == '__main__':
     # preprocess data
     time_data, agg_data = preprocess_dataset(
         df, run_aggs, time_aggs, col_names)
-    time_fname = f"{DATA_PATH}{MODEL_NAME}_{config}_ts_{timestr}.csv"
+    time_fname = f"{DATA_PATH}{MODEL_NAME}_{config}_{config_slice}_ts_{timestr}.csv"
     time_data.to_csv(time_fname)
     print(
         f'Saved time-series dataframe ({time_data.shape[0]} rows, {time_data.shape[1]} columns) to file {time_fname}')
-    agg_fname = f"{DATA_PATH}{MODEL_NAME}_{config}_agg_{timestr}.csv"
+    agg_fname = f"{DATA_PATH}{MODEL_NAME}_{config}_{config_slice}_agg_{timestr}.csv"
     agg_data.to_csv(agg_fname)
     print(
         f'Saved aggregated dataframe ({agg_data.shape[0]} rows, {agg_data.shape[1]} columns) to file {agg_fname}')

@@ -12,10 +12,13 @@
 
 
 echo "Job $SLURM_JOB_ID started at $(date)"
+module purge
 module load gcc
 module load python
+echo "Loaded required gcc and python modules"
 pip install -r requirements.txt
-python run.py --config $1 --slice $2
+echo "Installed necessary Python modules"
+python run.py --config default --slice qml08alpha50
 EXITSTATUS=$?
 echo "Job $SLURM_JOB_ID finished at $(date)"
 exit $EXITSTATUS
