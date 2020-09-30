@@ -1,6 +1,6 @@
 simulation_config = {
     "test": {
-        "num_iterations": 2,
+        "num_iterations": 1,
         "num_steps": 175,
         "fixed_params": {
             "m": 30,
@@ -25,6 +25,30 @@ simulation_config = {
             "p_2": [0.1, 0.9],
             "p_3": [0.1, 0.9],
             "p_turb": [0, 0.1],
+        },
+    },
+    "no_ml": {
+        "num_iterations": 1,
+        "num_steps": 175,
+        "fixed_params": {
+            "m": 30,
+            "n": 50,
+            "j": 0,
+            "q_h1": 0.1,
+            "q_h2": 0.5,
+            "q_ml_scaling": "off",
+        },
+        "slice": {
+            "standard": {
+                "q_ml": 0.5,
+                "alpha": 5,
+            },
+        },
+        "variable_params": {
+            "p_1": [0.1, 0.5, 0.9],
+            "p_2": [0.1, 0.5, 0.9],
+            "p_3": [0.1, 0.5, 0.9],
+            "p_turb": [0, 0.02, 0.2],
         },
     },
     "default": {

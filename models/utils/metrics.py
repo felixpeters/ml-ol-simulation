@@ -39,7 +39,7 @@ def calc_kl_var(model):
 
 def calc_avg_q_ml(model):
     result = 0.0
-    if model.conf["q_ml_scaling"] == "on":
+    if model.conf["q_ml_scaling"] == "on" and model.conf["j"] > 0:
         result = np.mean(model.conf["q_ml"])
     else:
         result = model.conf["q_ml"]
