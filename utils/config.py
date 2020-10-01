@@ -119,47 +119,47 @@ simulation_config = {
             "q_ml_scaling": "on",
         },
         "slice": {
-            "slice01": {
+            "slice1": {
                 "q_ml": 0.2,
                 "alpha": 1,
                 "p_turb": 0,
             },
-            "slice02": {
+            "slice2": {
                 "q_ml": 0.2,
                 "alpha": 1,
                 "p_turb": 0.02,
             },
-            "slice03": {
+            "slice3": {
                 "q_ml": 0.2,
                 "alpha": 1,
                 "p_turb": 0.2,
             },
-            "slice04": {
+            "slice4": {
                 "q_ml": 0.2,
                 "alpha": 10,
                 "p_turb": 0,
             },
-            "slice05": {
+            "slice5": {
                 "q_ml": 0.2,
                 "alpha": 10,
                 "p_turb": 0.02,
             },
-            "slice06": {
+            "slice6": {
                 "q_ml": 0.2,
                 "alpha": 10,
                 "p_turb": 0.2,
             },
-            "slice07": {
+            "slice7": {
                 "q_ml": 0.2,
                 "alpha": 50,
                 "p_turb": 0,
             },
-            "slice08": {
+            "slice8": {
                 "q_ml": 0.2,
                 "alpha": 50,
                 "p_turb": 0.02,
             },
-            "slice09": {
+            "slice9": {
                 "q_ml": 0.2,
                 "alpha": 50,
                 "p_turb": 0.2,
