@@ -11,11 +11,11 @@ simulation_config = {
             "q_ml_scaling": "on",
         },
         "slice": {
-            "qml05alpha5": {
+            "slice1": {
                 "q_ml": 0.5,
                 "alpha": 5,
             },
-            "qml05alpha50": {
+            "slice2": {
                 "q_ml": 0.5,
                 "alpha": 50,
             },

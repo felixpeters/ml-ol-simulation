@@ -255,6 +255,9 @@ class BaseModel(Model):
     get_p_turb = partialmethod(get_config, "p_turb")
     get_q_ml_scaling = partialmethod(get_config, "q_ml_scaling")
 
+    def get_q_ml_scaling_int(self, *args):
+        return (1 if self.conf["q_ml_scaling"] == "on" else 0)
+
     def get_time(self, *args):
         return int(self.schedule.time)
 
@@ -294,7 +297,7 @@ class BaseModel(Model):
                 "q_ml": self.get_q_ml_basic,
                 "alpha_ml": self.get_alpha_ml,
                 "p_turb": self.get_p_turb,
-                "q_ml_scaling": self.get_q_ml_scaling,
+                "q_ml_scaling": self.get_q_ml_scaling_int,
                 "avg_q_ml": calc_avg_q_ml,
                 "code_kl": calc_code_kl,
                 "human_kl": calc_human_kl,
