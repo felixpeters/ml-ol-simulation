@@ -32,10 +32,10 @@ def get_tracking_data(runner):
     # assemble data frame from model tracking data
     df = runner.get_model_vars_dataframe()
     print(
-        f'Size of model vars dataframe (in MB): {round(df.memory_usage().sum() / (1024**2), 4)}')
+        f'Size of model vars dataframe (in MB): {round(df.memory_usage(deep=True).sum() / (1024**2), 4)}')
     hists = df.loc[:, 'history']
     print(
-        f'Size of hists series (in MB): {round(hists.memory_usage() / (1024**2), 4)}')
+        f'Size of hists series (in MB): {round(hists.memory_usage(deep=True) / (1024**2), 4)}')
     res_list = [hist.model_vars for hist in hists]
     res_df = pd.concat(pd.DataFrame(l, dtype=np.float32) for l in res_list)
     print(
