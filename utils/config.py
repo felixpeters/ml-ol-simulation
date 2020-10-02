@@ -1,7 +1,7 @@
 simulation_config = {
     "test": {
-        "num_iterations": 1,
-        "num_steps": 175,
+        "num_iterations": 2,
+        "num_steps": 500,
         "fixed_params": {
             "m": 30,
             "n": 50,
@@ -29,7 +29,7 @@ simulation_config = {
     },
     "no_ml": {
         "num_iterations": 80,
-        "num_steps": 175,
+        "num_steps": 500,
         "fixed_params": {
             "m": 30,
             "n": 50,
@@ -37,79 +37,29 @@ simulation_config = {
             "q_h1": 0.1,
             "q_h2": 0.5,
             "q_ml_scaling": "off",
+            "q_ml": 0.5,
+            "alpha": 5,
         },
         "slice": {
-            "standard": {
-                "q_ml": 0.5,
-                "alpha": 5,
+            "slice1": {
+                "p_turb": 0,
+            },
+            "slice2": {
+                "p_turb": 0.02,
+            },
+            "slice3": {
+                "p_turb": 0.2,
             },
         },
         "variable_params": {
             "p_1": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
             "p_2": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
             "p_3": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-            "p_turb": [0, 0.02, 0.2],
         },
     },
     "default": {
         "num_iterations": 80,
-        "num_steps": 175,
-        "fixed_params": {
-            "m": 30,
-            "n": 50,
-            "j": 15,
-            "q_h1": 0.1,
-            "q_h2": 0.5,
-            "q_ml_scaling": "on",
-        },
-        "slice": {
-            "qml02alpha1": {
-                "q_ml": 0.2,
-                "alpha": 1,
-            },
-            "qml02alpha10": {
-                "q_ml": 0.2,
-                "alpha": 10,
-            },
-            "qml02alpha50": {
-                "q_ml": 0.2,
-                "alpha": 50,
-            },
-            "qml05alpha1": {
-                "q_ml": 0.5,
-                "alpha": 1,
-            },
-            "qml05alpha10": {
-                "q_ml": 0.5,
-                "alpha": 10,
-            },
-            "qml05alpha50": {
-                "q_ml": 0.5,
-                "alpha": 50,
-            },
-            "qml08alpha1": {
-                "q_ml": 0.8,
-                "alpha": 1,
-            },
-            "qml08alpha10": {
-                "q_ml": 0.8,
-                "alpha": 10,
-            },
-            "qml08alpha50": {
-                "q_ml": 0.8,
-                "alpha": 50,
-            },
-        },
-        "variable_params": {
-            "p_1": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-            "p_2": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-            "p_3": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-            "p_turb": [0, 0.02, 0.2],
-        },
-    },
-    "long": {
-        "num_iterations": 80,
-        "num_steps": 1000,
+        "num_steps": 500,
         "fixed_params": {
             "m": 30,
             "n": 50,
