@@ -112,4 +112,5 @@ nbs/data
 .mypy_cache/
 
 # custom
-run-slurm.sh
+run-single.sh
+run-array.sh
